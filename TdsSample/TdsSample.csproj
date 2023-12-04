@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj" />
+    <ProjectReference Include="..\tds\Microsoft.Protocols.Tds.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bedrock.Framework">
+      <Version>0.1.63-alpha.gf69fa1b135</Version>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
