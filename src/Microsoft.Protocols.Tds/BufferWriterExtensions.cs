@@ -87,9 +87,14 @@ internal static class BufferWriterExtensions
         var span = writer.GetSpan(16);
 
 #if NET
-        Debug.Assert(value.TryWriteBytes(span, bigEndian: true, out var written));
-
-        writer.Advance(written);
+        if (value.TryWriteBytes(span, bigEndian: true, out var written))
+        {
+            writer.Advance(written);
+        }
+        else
+        {
+            Debug.Assert(false, "Didn't write guid");
+        }
 #else
         writer.Write(value.ToByteArray());
 #endif
