@@ -32,11 +32,11 @@ var builder = TdsConnectionBuilder.Create(provider)
     .Use(async (ctx, next) =>
     {
         await ctx.SendPacketAsync(TdsType.PreLogin);
-        await ctx.ReadPacketAsync();
+        var result = await ctx.ReadPacketAsync();
     })
     .Build();
 
-var parser = new TdsParser(builder)
+var parser = new TdsParser(builder, provider)
 {
     Host = "127.0.0.1"
 };

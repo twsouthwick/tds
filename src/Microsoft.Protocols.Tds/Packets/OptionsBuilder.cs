@@ -4,14 +4,14 @@ using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool) : ITdsPacket, IPacketBuilder
+internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool) : ITdsPacket, IPacketOptionBuilder
 {
-    private readonly List<(byte Key, Action<TdsConnectionContext, IBufferWriter<byte>> Writer)> _items = new();
+    private readonly List<IPacketOption> _items = new();
 
     public TdsType Type => type;
 
-    public void Add(byte optionKey, Action<TdsConnectionContext, IBufferWriter<byte>> func)
-        => _items.Add((optionKey, func));
+    public void Add(IPacketOption option)
+        => _items.Add(option);
 
     public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
@@ -21,15 +21,17 @@ internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> 
 
         try
         {
-            foreach (var (key, func) in _items)
+            var key = 0;
+
+            foreach (var option in _items)
             {
                 var before = payload.WrittenCount;
 
-                func(context, payload);
+                option.Write(context, payload);
 
                 var after = payload.WrittenCount;
 
-                options.Write((byte)key);
+                options.Write((byte)key++);
                 options.Write((short)(offset + before));
                 options.Write((short)(after - before));
             }

@@ -15,7 +15,7 @@ public class TableTdsResponsePacket : TdsResponsePacket
 
         while (true)
         {
-            if (context.ParseNext() is { } parsed)
+            if (context.Parse() is { } parsed)
             {
                 list.Add(parsed);
             }

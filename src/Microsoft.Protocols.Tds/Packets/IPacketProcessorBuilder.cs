@@ -4,10 +4,17 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public interface IPacketProcessorBuilder
 {
-    void AddPacket(TdsType type, Action<IPacketBuilder> builder);
+    void AddPacket(TdsType type, Action<IPacketOptionBuilder> builder);
 }
 
-public interface IPacketBuilder
+public interface IPacketOptionBuilder
 {
-    void Add(byte optionKey, Action<TdsConnectionContext, IBufferWriter<byte>> func);
+    void Add(IPacketOption option);
+}
+
+public interface IPacketOption
+{
+    void Write(TdsConnectionContext context, IBufferWriter<byte> writer);
+
+    void Read(TdsConnectionContext context, ReadOnlySpan<byte> data);
 }

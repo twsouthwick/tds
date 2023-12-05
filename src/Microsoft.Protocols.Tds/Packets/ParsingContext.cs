@@ -7,8 +7,14 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public class ParsingContext
 {
+    private readonly ReadOnlySequence<byte> _original;
+
+    private FeatureReference<IPacketParserFeature> _parser = FeatureReference<IPacketParserFeature>.Default;
+
     public ParsingContext(TdsConnectionContext context, in ReadOnlySequence<byte> input, SequencePosition consumed, SequencePosition examined)
     {
+        _original = input;
+
         Context = context;
         Input = input;
         Consumed = consumed;
@@ -30,7 +36,11 @@ public class ParsingContext
         Examined = Consumed;
     }
 
-    public TdsResponsePacket? ParseNext() => Context.Features.GetRequiredFeature<IPacketParserFeature>().Parse(this);
+    private IPacketParserFeature Parser => _parser.Fetch(Context.Features) ?? throw new InvalidOperationException();
+
+    public TdsResponsePacket? Parse(TdsType type) => Parser.Parse(type, this);
+
+    public TdsResponsePacket? Parse() => Parser.Parse(this);
 
     public T Read<T>()
         where T : struct
@@ -44,9 +54,7 @@ public class ParsingContext
 
         var result = MemoryMarshal.Read<T>(buffer.First.Span);
 
-
-        Consumed = buffer.End;
-        Examined = Consumed;
+        Advance(Marshal.SizeOf<T>());
 
         return result;
     }
