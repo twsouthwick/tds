@@ -42,6 +42,12 @@ public class TdsConnectionContext
         return feature.Value;
     }
 
+    public ValueTask SendPacketAsync(TdsType type)
+    {
+        var packet = Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new KeyNotFoundException();
+        return WritePacketAsync(packet);
+    }
+
     private sealed class Nonce
     {
         private byte[] _value;

@@ -27,10 +27,11 @@ using var provider = services.BuildServiceProvider();
 
 var builder = TdsConnectionBuilder.Create(provider)
     .UseHostResolution()
+    .UseDefaultPacketProcessor()
     .UseBedrock()
     .Use(async (ctx, next) =>
     {
-        await ctx.WritePacketAsync(Packets.PreLogin.Packet);
+        await ctx.SendPacketAsync(TdsType.PreLogin);
         await ctx.ReadPacketAsync();
     })
     .Build();
