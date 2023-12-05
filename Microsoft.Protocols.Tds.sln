@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34321.82
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Protocols.Tds", "tds\Microsoft.Protocols.Tds.csproj", "{94042D6C-45D3-4EC6-BB2C-0E66C80A04F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Protocols.Tds", "tds\Microsoft.Protocols.Tds.csproj", "{94042D6C-45D3-4EC6-BB2C-0E66C80A04F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TdsSample", "TdsSample\TdsSample.csproj", "{042AFE6D-EF1B-44D9-9AEB-0B67D063DAB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TdsSample", "TdsSample\TdsSample.csproj", "{042AFE6D-EF1B-44D9-9AEB-0B67D063DAB9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77DCA1C9-0224-45A3-8BC3-785A09BE1B19}"
 	ProjectSection(SolutionItems) = preProject
@@ -15,7 +15,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Protocols.Tds.Bedrock", "src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj", "{FD4F567F-875D-4343-9ED2-263B520A9D4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Protocols.Tds.Bedrock", "src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj", "{FD4F567F-875D-4343-9ED2-263B520A9D4A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D7556A80-5F3E-4578-97B0-30DBE74EA908}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{4E5383ED-03A7-4BC8-BAF8-18732F8038A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +42,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{94042D6C-45D3-4EC6-BB2C-0E66C80A04F8} = {D7556A80-5F3E-4578-97B0-30DBE74EA908}
+		{042AFE6D-EF1B-44D9-9AEB-0B67D063DAB9} = {4E5383ED-03A7-4BC8-BAF8-18732F8038A0}
+		{FD4F567F-875D-4343-9ED2-263B520A9D4A} = {D7556A80-5F3E-4578-97B0-30DBE74EA908}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A893A779-8998-4553-8DE5-4719E450A986}
