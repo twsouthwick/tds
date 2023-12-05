@@ -23,7 +23,7 @@ public class TdsConnectionContext
         return feature.WritePacket(packet);
     }
 
-    public ValueTask<ITdsPacket> ReadPacketAsync()
+    public ValueTask<TdsResponsePacket> ReadPacketAsync()
     {
         var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
 

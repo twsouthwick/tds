@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+
 namespace Microsoft.Protocols.Tds.Packets;
 
 public interface ITdsPacket
@@ -7,3 +8,4 @@ public interface ITdsPacket
 
     void Write(TdsConnectionContext context, IBufferWriter<byte> writer);
 }
+

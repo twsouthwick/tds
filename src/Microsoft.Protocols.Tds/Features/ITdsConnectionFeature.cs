@@ -6,5 +6,5 @@ public interface ITdsConnectionFeature
 {
     ValueTask WritePacket(ITdsPacket packet);
 
-    ValueTask<ITdsPacket> ReadPacketAsync();
+    ValueTask<TdsResponsePacket> ReadPacketAsync();
 }

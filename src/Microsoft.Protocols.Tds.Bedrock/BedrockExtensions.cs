@@ -37,7 +37,7 @@ namespace Microsoft.Protocols.Tds
             });
         }
 
-        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<ITdsPacket>
+        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<TdsResponsePacket>
         {
             public ProtocolWriter Writer { get; } = connection.CreateWriter();
 
@@ -48,7 +48,7 @@ namespace Microsoft.Protocols.Tds
             public ValueTask WritePacket(ITdsPacket packet)
                 => Writer.WriteAsync(this, packet, Token);
 
-            public async ValueTask<ITdsPacket> ReadPacketAsync()
+            public async ValueTask<TdsResponsePacket> ReadPacketAsync()
             {
                 var result = await Reader.ReadAsync(this, Token);
 
@@ -60,10 +60,15 @@ namespace Microsoft.Protocols.Tds
             void IMessageWriter<ITdsPacket>.WriteMessage(ITdsPacket message, IBufferWriter<byte> output)
                 => message.Write(ctx, output);
 
-            bool IMessageReader<ITdsPacket>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out ITdsPacket message)
+            bool IMessageReader<TdsResponsePacket>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out TdsResponsePacket message)
             {
-                message = default!;
-                return false;
+                var context = new ParsingContext(ctx, input, examined, consumed);
+                message = TdsResponsePacket.Parse(context)!;
+
+                consumed = context.Consumed;
+                examined = context.Examined;
+
+                return message is not null;
             }
         }
     }

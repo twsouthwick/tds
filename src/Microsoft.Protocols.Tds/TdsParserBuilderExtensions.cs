@@ -1,5 +1,4 @@
 ﻿using Microsoft.Protocols.Tds.Features;
-using Microsoft.Protocols.Tds.Packets;
 using System.Net;
 
 namespace Microsoft.Protocols.Tds;
@@ -46,17 +45,4 @@ public static class TdsParserBuilderExtensions
         {
             return next(ctx);
         });
-
-    private sealed class DebuggingFeatures(ITdsConnectionFeature other) : ITdsConnectionFeature
-    {
-        public ValueTask<ITdsPacket> ReadPacketAsync()
-        {
-            return other.ReadPacketAsync();
-        }
-
-        public ValueTask WritePacket(ITdsPacket packet)
-        {
-            return other.WritePacket(packet);
-        }
-    }
 }
