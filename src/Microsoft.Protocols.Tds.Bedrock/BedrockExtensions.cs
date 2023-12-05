@@ -18,11 +18,6 @@ namespace Microsoft.Protocols.Tds
             var client = new ClientBuilder(builder.Services)
                 .UseSockets()
                 .UseConnectionLogging()
-                //.UseClientTls(options =>
-                //{
-                //    options.AllowAnyRemoteCertificate();
-                //    options.RemoteCertificateValidation = Test;
-                //})
                 .Build();
 
             return builder.Use(async (ctx, next) =>
@@ -40,11 +35,6 @@ namespace Microsoft.Protocols.Tds
 
                 await next(ctx);
             });
-        }
-
-        private static bool Test(X509Certificate2 certificate, X509Chain chain, SslPolicyErrors policyErrors)
-        {
-            return true;
         }
 
         private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<ITdsPacket>
