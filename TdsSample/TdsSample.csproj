@@ -16,6 +16,7 @@
     <PackageReference Include="Bedrock.Framework">
       <Version>0.1.63-alpha.gf69fa1b135</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />
   </ItemGroup>
 
 </Project>

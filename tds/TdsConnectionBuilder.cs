@@ -4,9 +4,12 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
 {
     private readonly List<Func<TdsConnectionDelegate, TdsConnectionDelegate>> _components = new();
 
-    private TdsConnectionBuilder()
+    private TdsConnectionBuilder(IServiceProvider? provider)
     {
-        Properties = new Dictionary<string, object?>(StringComparer.Ordinal);
+        Properties = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            { nameof(Services), provider }
+        };
     }
 
     private TdsConnectionBuilder(IDictionary<string, object?> properties)
@@ -14,11 +17,11 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
         Properties = new CopyOnWriteDictionary<string, object?>(properties, StringComparer.Ordinal);
     }
 
-    public IServiceProvider Services => this;
+    public IServiceProvider Services => Properties.TryGetValue(nameof(Services), out var result) && result is IServiceProvider services ? services : this;
 
     public IDictionary<string, object?> Properties { get; }
 
-    public static ITdsConnectionBuilder Create() => new TdsConnectionBuilder();
+    public static ITdsConnectionBuilder Create(IServiceProvider? provider = null) => new TdsConnectionBuilder(provider);
 
     private static TdsConnectionDelegate _connection = context =>
 #if NET8_0_OR_GREATER

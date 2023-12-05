@@ -1,8 +1,10 @@
-﻿using System.IO.Pipelines;
+﻿using Microsoft.Protocols.Tds.Packets;
 
 namespace Microsoft.Protocols.Tds.Features;
 
 public interface ITdsConnectionFeature
 {
-    IDuplexPipe Pipe { get; }
+    ValueTask WritePacket(ITdsPacket packet);
+
+    ValueTask<ITdsPacket> ReadPacketAsync();
 }

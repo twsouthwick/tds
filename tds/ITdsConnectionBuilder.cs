@@ -2,13 +2,13 @@
 
 public interface ITdsConnectionBuilder
 {
-    public IServiceProvider Services { get; }
+    IServiceProvider Services { get; }
 
-    public ITdsConnectionBuilder Use(Func<TdsConnectionDelegate, TdsConnectionDelegate> middleware);
+    ITdsConnectionBuilder Use(Func<TdsConnectionDelegate, TdsConnectionDelegate> middleware);
 
-    public ITdsConnectionBuilder New();
+    ITdsConnectionBuilder New();
 
-    public IDictionary<string, object?> Properties { get; }
+    IDictionary<string, object?> Properties { get; }
 
     TdsConnectionDelegate Build();
 }
