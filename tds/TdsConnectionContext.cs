@@ -13,7 +13,7 @@ public class TdsConnectionContext
 
     public CancellationToken Aborted => Features.GetRequiredFeature<IAbortFeature>().Token;
 
-    public Guid TraceId { get; } = Guid.NewGuid();
+    public Guid? TraceId { get; } = Guid.NewGuid();
 
     public void Abort() => Features.GetRequiredFeature<IAbortFeature>().Abort();
 
@@ -31,34 +31,10 @@ public class TdsConnectionContext
         return feature.ReadPacketAsync();
     }
 
-    internal ReadOnlySpan<byte> GetNonce()
-    {
-        if (Features.Get<Nonce>() is not { } feature)
-        {
-            feature = new();
-            Features.Set(feature);
-        }
-
-        return feature.Value;
-    }
-
     public ValueTask SendPacketAsync(TdsType type)
     {
         var packet = Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new KeyNotFoundException();
         return WritePacketAsync(packet);
-    }
-
-    private sealed class Nonce
-    {
-        private byte[] _value;
-
-        public Nonce()
-        {
-            _value = new byte[32];
-            RandomNumberGenerator.Fill(_value);
-        }
-
-        public ReadOnlySpan<byte> Value => _value;
     }
 }
 

@@ -10,10 +10,18 @@ public static class PacketExtensions
             packet.AddPreLogin();
         });
 
-    public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketBuilder> configure)
+    public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketProcessorBuilder> configure)
     {
         var packetBuilder = new PacketBuilder();
         configure(packetBuilder);
+
+        if (builder.Properties.TryGetValue(nameof(PacketBuilder), out var existing) && existing is IPacketProcessorBuilder existingBuilder)
+        {
+            configure(existingBuilder);
+            return builder;
+        }
+
+        builder.Properties.Add(nameof(PacketBuilder), packetBuilder);
 
         return builder.Use((ctx, next) =>
         {
@@ -22,11 +30,11 @@ public static class PacketExtensions
         });
     }
 
-    private class PacketBuilder : IPacketBuilder, IPacketCollectionFeature
+    private class PacketBuilder : IPacketProcessorBuilder, IPacketCollectionFeature
     {
         private readonly Dictionary<TdsType, ITdsPacket> _lookup = new();
 
-        public void AddPacket(TdsType type, Action<OptionsBuilder> builder)
+        public void AddPacket(TdsType type, Action<IPacketBuilder> builder)
         {
             var options = new OptionsBuilder(type);
 
@@ -39,7 +47,7 @@ public static class PacketExtensions
             => _lookup.TryGetValue(type, out var packet) ? packet : null;
     }
 
-    public static IPacketBuilder AddPreLogin(this IPacketBuilder builder)
+    public static IPacketProcessorBuilder AddPreLogin(this IPacketProcessorBuilder builder)
     {
         const byte VERSION = 0;
         const byte ENCRYPT = 1;
@@ -49,7 +57,7 @@ public static class PacketExtensions
         const byte TRACEID = 5;
         const byte FEDAUTHREQUIRED = 6;
 
-        var version = typeof(IPacketBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
+        var version = typeof(IPacketProcessorBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
         var End = new byte[] { 0xFF };
         var DefaultServer = new byte[] { 0x0 };
 
@@ -57,11 +65,19 @@ public static class PacketExtensions
         {
             options.Add(VERSION, (_, writer) => writer.Write(version));
             options.Add(ENCRYPT, (_, writer) => writer.Write((byte)0));
-            //options.Add(INSTANCE, (_, writer) => writer.WriteNullTerminated(string.Empty));
+            options.Add(INSTANCE, (_, writer) => writer.WriteNullTerminated(string.Empty));
             options.Add(THREADID, (_, writer) => writer.Write((Int32)Environment.CurrentManagedThreadId));
-            //options.Add(MARS, (_, writer) => writer.Write(false));
-            options.Add(TRACEID, (ctx, writer) => writer.Write(ctx.TraceId));
-            //options.Add(FEDAUTHREQUIRED, (ctx, writer) => writer.Write(true));
+            options.Add(MARS, (_, writer) => writer.Write(true));
+            options.Add(TRACEID, (ctx, writer) =>
+            {
+                if (ctx.TraceId is { } traceId && ctx.Features.Get<ICorrelationFeature>() is { } feature)
+                {
+                    writer.Write(traceId);
+                    writer.Write(feature.ActivityId);
+                    writer.Write(feature.SequenceId);
+                }
+            });
+            options.Add(FEDAUTHREQUIRED, (ctx, writer) => writer.Write(true));
             //{ NONCEOPT, (ctx, writer) => writer.Write(ctx.GetNonce()) },
         });
 

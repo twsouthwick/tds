@@ -9,8 +9,9 @@ internal static class BufferWriterExtensions
     public static void Write(this Span<byte> span, short value)
     {
         span[0] = (byte)((value & 0xff00) >> 8);
-        span[1] = (byte)(value & 0xff);
+        span[1] = (byte)(value & 0x00ff);
     }
+
     public static void Write(this IBufferWriter<byte> writer, short value)
     {
         var span = writer.GetSpan(2);
@@ -77,10 +78,10 @@ internal static class BufferWriterExtensions
 
     public static void Write(this IBufferWriter<byte> writer, Guid value)
     {
-        var span = writer.GetSpan(8);
+        var span = writer.GetSpan(16);
 
-        Debug.Assert(value.TryWriteBytes(span));
+        Debug.Assert(value.TryWriteBytes(span, bigEndian: true, out var written));
 
-        writer.Advance(8);
+        writer.Advance(written);
     }
 }

@@ -1,9 +1,8 @@
 ﻿using System.Buffers;
-using System.Collections;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-public class OptionsBuilder(TdsType type) : ITdsPacket, IEnumerable<(byte optionKey, Action<TdsConnectionContext, IBufferWriter<byte>> func)>
+internal class OptionsBuilder(TdsType type) : ITdsPacket, IPacketBuilder
 {
     private readonly List<(byte Key, Action<TdsConnectionContext, IBufferWriter<byte>> Writer)> _items = new();
 
@@ -11,8 +10,6 @@ public class OptionsBuilder(TdsType type) : ITdsPacket, IEnumerable<(byte option
 
     public void Add(byte optionKey, Action<TdsConnectionContext, IBufferWriter<byte>> func)
         => _items.Add((optionKey, func));
-
-    public IEnumerator<(byte optionKey, Action<TdsConnectionContext, IBufferWriter<byte>> func)> GetEnumerator() => _items.GetEnumerator();
 
     public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
@@ -41,8 +38,6 @@ public class OptionsBuilder(TdsType type) : ITdsPacket, IEnumerable<(byte option
         writer.Write(options.WrittenSpan);
         writer.Write(payload.WrittenSpan);
     }
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     private void WriteHeader(IBufferWriter<byte> writer, short length)
     {
