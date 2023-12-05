@@ -65,10 +65,7 @@ namespace Microsoft.Protocols.Tds
                 return result.Message;
             }
 
-            public void Abort()
-            {
-                connection.Abort();
-            }
+            public void Abort() => connection.Abort();
 
             void IMessageWriter<ITdsPacket>.WriteMessage(ITdsPacket message, IBufferWriter<byte> output)
                 => message.Write(ctx, output);

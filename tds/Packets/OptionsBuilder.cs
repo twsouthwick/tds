@@ -16,7 +16,8 @@ public class OptionsBuilder(TdsType type) : ITdsPacket, IEnumerable<(byte option
 
     public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
-        var options = new ArrayBufferWriter<byte>(5 * _items.Count);
+        var offset = 5 * _items.Count + 1;
+        var options = new ArrayBufferWriter<byte>(offset);
         var payload = new ArrayBufferWriter<byte>();
 
         foreach (var (key, func) in _items)
@@ -28,7 +29,7 @@ public class OptionsBuilder(TdsType type) : ITdsPacket, IEnumerable<(byte option
             var after = payload.WrittenCount;
 
             options.Write((byte)key);
-            options.Write((short)before);
+            options.Write((short)(offset + before));
             options.Write((short)(after - before));
         }
 

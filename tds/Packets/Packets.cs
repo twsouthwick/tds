@@ -19,8 +19,8 @@ public static class Packets
             { THREADID, (_, writer) => writer.Write((Int32)Environment.CurrentManagedThreadId) },
             { MARS, (_, writer) => writer.Write(false) },
             { TRACEID, (ctx, writer) => writer.Write(ctx.TraceId) },
-            { FEDAUTHREQUIRED, (ctx, writer) => writer.Write(false) },
-            { FEDAUTHREQUIRED, (ctx, writer) => writer.Write(false) },
+            { FEDAUTHREQUIRED, (ctx, writer) => writer.Write(true) },
+            //{ NONCEOPT, (ctx, writer) => writer.Write(ctx.GetNonce()) },
         };
 
         private const byte VERSION = 0;
@@ -30,7 +30,7 @@ public static class Packets
         private const byte MARS = 4;
         private const byte TRACEID = 5;
         private const byte FEDAUTHREQUIRED = 6;
-        private const byte NUMOPT = 7;
+        private const byte NONCEOPT = 7;
         private const byte LASTOPT = 255;
     }
 }

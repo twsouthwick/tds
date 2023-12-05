@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
+using System.Security.Cryptography;
 
 namespace Microsoft.Protocols.Tds;
 
@@ -28,6 +29,30 @@ public class TdsConnectionContext
         var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
 
         return feature.ReadPacketAsync();
+    }
+
+    internal ReadOnlySpan<byte> GetNonce()
+    {
+        if (Features.Get<Nonce>() is not { } feature)
+        {
+            feature = new();
+            Features.Set(feature);
+        }
+
+        return feature.Value;
+    }
+
+    private sealed class Nonce
+    {
+        private byte[] _value;
+
+        public Nonce()
+        {
+            _value = new byte[32];
+            RandomNumberGenerator.Fill(_value);
+        }
+
+        public ReadOnlySpan<byte> Value => _value;
     }
 }
 
