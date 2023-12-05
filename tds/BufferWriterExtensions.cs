@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Microsoft.Protocols.Tds.Packets;
+namespace Microsoft.Protocols.Tds;
 
 internal static class BufferWriterExtensions
 {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.ObjectPool;
+using Microsoft.Protocols.Tds;
 using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
