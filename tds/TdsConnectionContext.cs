@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
-using System.Security.Cryptography;
 
 namespace Microsoft.Protocols.Tds;
 
