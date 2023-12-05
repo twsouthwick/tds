@@ -23,8 +23,14 @@ internal static class BufferWriterExtensions
 
     public static void WriteNullTerminated(this IBufferWriter<byte> writer, string str)
     {
+#if NET
         Encoding.Unicode.GetBytes(str, writer);
         writer.Write((byte)0);
+#else
+        var bytes = Encoding.Unicode.GetBytes(str);
+        writer.Write(bytes);
+        writer.Write((byte)0);
+#endif
     }
 
     public static void Write(this IBufferWriter<byte> writer, byte value)
@@ -80,8 +86,12 @@ internal static class BufferWriterExtensions
     {
         var span = writer.GetSpan(16);
 
+#if NET
         Debug.Assert(value.TryWriteBytes(span, bigEndian: true, out var written));
 
         writer.Advance(written);
+#else
+        writer.Write(value.ToByteArray());
+#endif
     }
 }
