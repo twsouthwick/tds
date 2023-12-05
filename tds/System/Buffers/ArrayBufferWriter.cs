@@ -3,7 +3,7 @@
 using System.Buffers;
 using System.Diagnostics;
 
-namespace Microsoft.Protocols.Tds;
+namespace System.Buffers;
 
 internal sealed class ArrayBufferWriter<T> : IBufferWriter<T>
 {

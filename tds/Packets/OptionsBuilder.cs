@@ -1,8 +1,9 @@
-﻿using System.Buffers;
+﻿using Microsoft.Extensions.ObjectPool;
+using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal class OptionsBuilder(TdsType type) : ITdsPacket, IPacketBuilder
+internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool) : ITdsPacket, IPacketBuilder
 {
     private readonly List<(byte Key, Action<TdsConnectionContext, IBufferWriter<byte>> Writer)> _items = new();
 
@@ -14,29 +15,37 @@ internal class OptionsBuilder(TdsType type) : ITdsPacket, IPacketBuilder
     public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
         var offset = 5 * _items.Count + 1;
-        var options = new ArrayBufferWriter<byte>(offset);
-        var payload = new ArrayBufferWriter<byte>();
+        var options = pool.Get();
+        var payload = pool.Get();
 
-        foreach (var (key, func) in _items)
+        try
         {
-            var before = payload.WrittenCount;
+            foreach (var (key, func) in _items)
+            {
+                var before = payload.WrittenCount;
 
-            func(context, payload);
+                func(context, payload);
 
-            var after = payload.WrittenCount;
+                var after = payload.WrittenCount;
 
-            options.Write((byte)key);
-            options.Write((short)(offset + before));
-            options.Write((short)(after - before));
+                options.Write((byte)key);
+                options.Write((short)(offset + before));
+                options.Write((short)(after - before));
+            }
+
+            // Mark end of options
+            options.Write((byte)255);
+
+            WriteHeader(writer, (short)(options.WrittenCount + payload.WrittenCount));
+
+            writer.Write(options.WrittenSpan);
+            writer.Write(payload.WrittenSpan);
         }
-
-        // Mark end of options
-        options.Write((byte)255);
-
-        WriteHeader(writer, (short)(options.WrittenCount + payload.WrittenCount));
-
-        writer.Write(options.WrittenSpan);
-        writer.Write(payload.WrittenSpan);
+        finally
+        {
+            pool.Return(options);
+            pool.Return(payload);
+        }
     }
 
     private void WriteHeader(IBufferWriter<byte> writer, short length)

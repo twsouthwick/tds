@@ -1,4 +1,6 @@
-﻿using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.Extensions.ObjectPool;
+using Microsoft.Protocols.Tds.Features;
+using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
@@ -30,13 +32,20 @@ public static class PacketExtensions
         });
     }
 
-    private class PacketBuilder : IPacketProcessorBuilder, IPacketCollectionFeature
+    private class PacketBuilder : IPacketProcessorBuilder, IPacketCollectionFeature, IPooledObjectPolicy<ArrayBufferWriter<byte>>
     {
-        private readonly Dictionary<TdsType, ITdsPacket> _lookup = new();
+        private readonly Dictionary<TdsType, ITdsPacket> _lookup;
+        private readonly ObjectPool<ArrayBufferWriter<byte>> _pool;
+
+        public PacketBuilder()
+        {
+            _lookup = new();
+            _pool = new DefaultObjectPool<ArrayBufferWriter<byte>>(this);
+        }
 
         public void AddPacket(TdsType type, Action<IPacketBuilder> builder)
         {
-            var options = new OptionsBuilder(type);
+            var options = new OptionsBuilder(type, _pool);
 
             builder(options);
 
@@ -45,6 +54,15 @@ public static class PacketExtensions
 
         public ITdsPacket? Get(TdsType type)
             => _lookup.TryGetValue(type, out var packet) ? packet : null;
+
+        ArrayBufferWriter<byte> IPooledObjectPolicy<ArrayBufferWriter<byte>>.Create()
+            => new ArrayBufferWriter<byte>();
+
+        bool IPooledObjectPolicy<ArrayBufferWriter<byte>>.Return(ArrayBufferWriter<byte> obj)
+        {
+            obj.Clear();
+            return true;
+        }
     }
 
     public static IPacketProcessorBuilder AddPreLogin(this IPacketProcessorBuilder builder)
