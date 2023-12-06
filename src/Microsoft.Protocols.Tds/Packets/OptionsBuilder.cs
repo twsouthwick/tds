@@ -105,7 +105,8 @@ internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> 
 
         public OptionsReader(in ReadOnlySequence<byte> data)
         {
-            _header = data.Read<TdsOptionsHeader>();
+            var reader = new SequenceReader<byte>(data);
+            _header = reader.Read<TdsOptionsHeader>();
             _data = data.Slice(Marshal.SizeOf<TdsOptionsHeader>());
         }
 
@@ -120,7 +121,8 @@ internal class OptionsBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> 
                 get
                 {
                     var slice = data.Slice(_count * Marshal.SizeOf<TdsOptionItem>(), Marshal.SizeOf<TdsOptionItem>());
-                    var item = slice.Read<TdsOptionItem>();
+                    var reader = new SequenceReader<byte>(slice);
+                    var item = reader.Read<TdsOptionItem>();
 
                     return data.Slice(item.Offset, item.Length);
                 }

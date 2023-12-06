@@ -21,7 +21,7 @@ public static class PreLoginPacketExtensions
     {
         private static readonly Version _version = typeof(IPacketProcessorBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
 
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
@@ -31,7 +31,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class EncryptOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
@@ -41,7 +41,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class InstanceOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
@@ -51,7 +51,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class ThreadIdOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
@@ -61,8 +61,10 @@ public static class PreLoginPacketExtensions
 
     private sealed class MarsOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
-            => data.ReadBoolean();
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
+        {
+            var reader = new SequenceReader<byte>(data);
+        }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
             => writer.Write(true);
@@ -70,7 +72,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class TraceIdOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
@@ -87,7 +89,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class FedAuthRequiredOption : IPacketOption
     {
-        public void Read(TdsConnectionContext context, ReadOnlySequence<byte> data)
+        public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 

@@ -5,7 +5,7 @@
     <TargetFrameworks Condition=" '$(PublishAOT)' == 'true'">net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks Condition=" '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'netstandard2.0' ">true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsAotCompatible Condition=" '$(TargetFramework)' == 'net8.0' ">true</IsAotCompatible>
   </PropertyGroup>
 

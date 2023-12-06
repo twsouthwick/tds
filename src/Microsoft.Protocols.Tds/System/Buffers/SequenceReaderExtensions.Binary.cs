@@ -1,10 +1,9 @@
 ﻿// Taken from https://github.com/dotnet/runtime/blob/main/src/libraries/System.Memory/src/System/Buffers/SequenceReaderExtensions.Binary.cs
 
-#if !NET
-
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.Protocols.Tds;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -12,8 +11,16 @@ using System.Runtime.InteropServices;
 
 namespace System.Buffers
 {
-    internal static partial class SequenceReaderExtensions
+    internal static partial class SequenceReaderExtensions2
     {
+        internal static T Read<T>(ref this SequenceReader<byte> reader)
+            where T : unmanaged
+        {
+            ThrowHelper.ThrowIfFalse(reader.TryRead<T>(out var result));
+
+            return result;
+        }
+
         /// <summary>
         /// Try to read the given type out of the buffer if possible. Warning: this is dangerous to use with arbitrary
         /// structs- see remarks for full details.
@@ -38,6 +45,7 @@ namespace System.Buffers
             return true;
         }
 
+
         private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value) where T : unmanaged
         {
             Debug.Assert(reader.UnreadSpan.Length < sizeof(T));
@@ -57,6 +65,7 @@ namespace System.Buffers
             return true;
         }
 
+#if !NET
         /// <summary>
         /// Reads an <see cref="short"/> as little endian.
         /// </summary>
@@ -173,6 +182,6 @@ namespace System.Buffers
 
             return false;
         }
+#endif
     }
 }
-#endif
