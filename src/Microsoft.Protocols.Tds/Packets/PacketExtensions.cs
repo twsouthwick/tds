@@ -45,7 +45,7 @@ public static class PacketExtensions
 
         public void AddPacket(TdsType type, Action<IPacketOptionBuilder> builder)
         {
-            var options = new OptionsBuilder(type, _pool);
+            var options = new TdsPacketBuilder(type, _pool);
 
             builder(options);
 
