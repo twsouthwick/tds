@@ -20,5 +20,11 @@ internal struct TdsOptionsHeader
     public byte Window { get; set; }
 
     public int GetLength() => (Length1 << 8) | Length2;
+
+    public void SetLength(int length)
+    {
+        Length2 = (byte)length;
+        Length1 = (byte)(length >> 8);
+    }
 }
 

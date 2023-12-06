@@ -32,7 +32,7 @@ var builder = TdsConnectionBuilder.Create(provider)
     .Use(async (ctx, next) =>
     {
         await ctx.SendPacketAsync(TdsType.PreLogin);
-        var result = await ctx.ReadPacketAsync();
+        await ctx.ReadPacketAsync(TdsType.PreLogin);
     })
     .Build();
 

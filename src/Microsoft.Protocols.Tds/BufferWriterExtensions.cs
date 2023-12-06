@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Microsoft.Protocols.Tds;
@@ -55,6 +56,17 @@ internal static class BufferWriterExtensions
         span[1] = (byte)((0x00ff0000 & value) >> 16);
         span[2] = (byte)((0x0000ff00 & value) >> 8);
         span[3] = (byte)(0x000000ff & value);
+    }
+
+    public static void Write<T>(this IBufferWriter<byte> writer, ref T value)
+        where T : struct
+    {
+        var size = Marshal.SizeOf<T>();
+        var span = writer.GetSpan(size);
+#pragma warning disable CS9191 // The 'ref' modifier for an argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
+        MemoryMarshal.Write(span, ref value);
+#pragma warning restore CS9191 // The 'ref' modifier for an argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
+        writer.Advance(size);
     }
 
     public static void Write(this IBufferWriter<byte> writer, bool value)

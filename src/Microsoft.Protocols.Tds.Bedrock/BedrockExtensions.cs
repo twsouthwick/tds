@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -37,7 +38,7 @@ namespace Microsoft.Protocols.Tds
             });
         }
 
-        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<TdsResponsePacket>
+        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<object>
         {
             public ProtocolWriter Writer { get; } = connection.CreateWriter();
 
@@ -48,11 +49,13 @@ namespace Microsoft.Protocols.Tds
             public ValueTask WritePacket(ITdsPacket packet)
                 => Writer.WriteAsync(this, packet, Token);
 
-            public async ValueTask<TdsResponsePacket> ReadPacketAsync()
-            {
-                var result = await Reader.ReadAsync(this, Token);
+            private ITdsPacket? _currentPacket;
 
-                return result.Message;
+            public async ValueTask ReadPacketAsync(ITdsPacket packet)
+            {
+                Debug.Assert(_currentPacket is null);
+                _currentPacket = packet;
+                await Reader.ReadAsync(this, Token);
             }
 
             public void Abort() => connection.Abort();
@@ -60,15 +63,18 @@ namespace Microsoft.Protocols.Tds
             void IMessageWriter<ITdsPacket>.WriteMessage(ITdsPacket message, IBufferWriter<byte> output)
                 => message.Write(ctx, output);
 
-            bool IMessageReader<TdsResponsePacket>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out TdsResponsePacket message)
+            bool IMessageReader<object>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out object message)
             {
-                var context = new ParsingContext(ctx, input, examined, consumed);
-                message = TdsResponsePacket.Parse(context)!;
+                message = null!;
 
-                consumed = context.Consumed;
-                examined = context.Examined;
+                if (_currentPacket is { } current)
+                {
+                    _currentPacket = null;
+                    current.Read(ctx, input);
+                    return true;
+                }
 
-                return message is not null;
+                return false;
             }
         }
     }

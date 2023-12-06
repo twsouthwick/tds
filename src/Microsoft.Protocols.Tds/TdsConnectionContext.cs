@@ -16,25 +16,23 @@ public class TdsConnectionContext
 
     public void Abort() => Features.GetRequiredFeature<IAbortFeature>().Abort();
 
-    public ValueTask WritePacketAsync(ITdsPacket packet)
+    public ValueTask ReadPacketAsync(TdsType type)
     {
+        var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
+
+        return feature.ReadPacketAsync(GetPacket(type));
+    }
+
+    public ValueTask SendPacketAsync(TdsType type)
+    {
+        var packet = GetPacket(type);
         var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
 
         return feature.WritePacket(packet);
     }
 
-    public ValueTask<TdsResponsePacket> ReadPacketAsync()
-    {
-        var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
-
-        return feature.ReadPacketAsync();
-    }
-
-    public ValueTask SendPacketAsync(TdsType type)
-    {
-        var packet = Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new KeyNotFoundException();
-        return WritePacketAsync(packet);
-    }
+    private ITdsPacket GetPacket(TdsType type)
+        => Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new InvalidOperationException();
 }
 
 
