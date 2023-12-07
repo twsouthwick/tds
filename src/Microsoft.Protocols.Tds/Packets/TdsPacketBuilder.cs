@@ -5,14 +5,18 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool) : ITdsPacket, IPacketOptionBuilder
+internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, ITdsConnectionBuilder builder) : ITdsPacket, IPacketOptionBuilder
 {
-    private readonly List<IPacketOption> _items = new();
+    private readonly List<IPacketOption> _items = [];
+    private TdsConnectionDelegate? _next;
 
     public TdsType Type => type;
 
-    void IPacketOptionBuilder.Add(IPacketOption option)
-        => _items.Add(option);
+    IPacketOptionBuilder IPacketOptionBuilder.AddOption(IPacketOption option)
+    {
+        _items.Add(option);
+        return this;
+    }
 
     void ITdsPacket.Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
@@ -74,6 +78,20 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         }
     }
 
+    ValueTask ITdsPacket.RunAsync(TdsConnectionContext context)
+    {
+        if (_next is { })
+        {
+            return _next(context);
+        }
+
+#if NET
+        return ValueTask.CompletedTask;
+#else
+        return default;
+#endif
+    }
+
     private void WriteHeader(IBufferWriter<byte> writer, short length)
     {
         TdsOptionsHeader header = default;
@@ -86,5 +104,18 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         header.SetLength((short)(length + PacketLength));
 
         writer.Write(ref header);
+    }
+
+    IPacketOptionBuilder IPacketOptionBuilder.AddHandler(Action<ITdsConnectionBuilder> configure)
+    {
+        if (_next is not null)
+        {
+            throw new InvalidOperationException("Only a single handler is supported.");
+        }
+
+        configure(builder);
+        _next = builder.Build();
+
+        return this;
     }
 }

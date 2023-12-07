@@ -16,11 +16,13 @@ public class TdsConnectionContext
 
     public void Abort() => Features.GetRequiredFeature<IAbortFeature>().Abort();
 
-    public ValueTask ReadPacketAsync(TdsType type)
+    public async ValueTask ReadPacketAsync(TdsType type)
     {
         var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
+        var packet = GetPacket(type);
 
-        return feature.ReadPacketAsync(GetPacket(type));
+        await feature.ReadPacketAsync(packet);
+        await packet.RunAsync(this);
     }
 
     public ValueTask SendPacketAsync(TdsType type)

@@ -5,21 +5,24 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public static class PreLoginPacketExtensions
 {
-    public static void AddPreLogin(this IPacketProcessorBuilder builder)
-        => builder.AddPacket(TdsType.PreLogin, builder =>
-        {
-            builder.Add(new VersionOption());
-            builder.Add(new EncryptOption());
-            builder.Add(new InstanceOption());
-            builder.Add(new ThreadIdOption());
-            builder.Add(new MarsOption());
-            builder.Add(new TraceIdOption());
-            builder.Add(new FedAuthRequiredOption());
-        });
+    public static void AddPreLogin(this IPacketCollectionBuilder builder)
+        => builder.AddPacket(TdsType.PreLogin)
+            .AddOption(new VersionOption())
+            .AddOption(new EncryptOption())
+            .AddOption(new InstanceOption())
+            .AddOption(new ThreadIdOption())
+            .AddOption(new MarsOption())
+            .AddOption(new TraceIdOption())
+            .AddOption(new FedAuthRequiredOption())
+            .AddHandler(builder => builder
+                .Use((ctx, next) =>
+                {
+                    return next(ctx);
+                }));
 
     private sealed class VersionOption : IPacketOption
     {
-        private static readonly Version _version = typeof(IPacketProcessorBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
+        private static readonly Version _version = typeof(IPacketCollectionBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
 
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
@@ -56,7 +59,7 @@ public static class PreLoginPacketExtensions
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write((Int32)Environment.CurrentManagedThreadId);
+            => writer.Write(Environment.CurrentManagedThreadId);
     }
 
     private sealed class MarsOption : IPacketOption

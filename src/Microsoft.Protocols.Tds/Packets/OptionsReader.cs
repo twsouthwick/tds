@@ -4,25 +4,26 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal struct OptionsReader
+internal readonly struct OptionsReader
 {
-    private readonly TdsOptionsHeader _header;
     private readonly ReadOnlySequence<byte> _data;
 
     public OptionsReader(in ReadOnlySequence<byte> data)
     {
         var reader = new SequenceReader<byte>(data);
-        _header = reader.Read<TdsOptionsHeader>();
+        Header = reader.Read<TdsOptionsHeader>();
         _data = data.Slice(Marshal.SizeOf<TdsOptionsHeader>());
     }
 
-    public Enumerator GetEnumerator() => new Enumerator(_data);
+    public TdsOptionsHeader Header { get; }
+
+    public Enumerator GetEnumerator() => new(_data);
 
     public struct Enumerator(ReadOnlySequence<byte> data)
     {
         private int _count = -1;
 
-        public ReadOnlySequence<byte> Current
+        public readonly ReadOnlySequence<byte> Current
         {
             get
             {
@@ -34,7 +35,7 @@ internal struct OptionsReader
             }
         }
 
-        private bool HasEnded
+        private readonly bool HasEnded
         {
             get
             {

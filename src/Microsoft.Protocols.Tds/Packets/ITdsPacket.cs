@@ -9,5 +9,7 @@ public interface ITdsPacket
     void Write(TdsConnectionContext context, IBufferWriter<byte> writer);
 
     void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data);
+
+    ValueTask RunAsync(TdsConnectionContext context);
 }
 

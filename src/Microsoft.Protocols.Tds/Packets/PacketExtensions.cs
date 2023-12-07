@@ -12,12 +12,12 @@ public static class PacketExtensions
             packet.AddPreLogin();
         });
 
-    public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketProcessorBuilder> configure)
+    public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketCollectionBuilder> configure)
     {
-        var packetBuilder = new PacketBuilder();
+        var packetBuilder = new PacketBuilder(builder.New());
         configure(packetBuilder);
 
-        if (builder.Properties.TryGetValue(nameof(PacketBuilder), out var existing) && existing is IPacketProcessorBuilder existingBuilder)
+        if (builder.Properties.TryGetValue(nameof(PacketBuilder), out var existing) && existing is IPacketCollectionBuilder existingBuilder)
         {
             configure(existingBuilder);
             return builder;
@@ -32,28 +32,30 @@ public static class PacketExtensions
         });
     }
 
-    private class PacketBuilder : IPacketProcessorBuilder, IPacketCollectionFeature, IPooledObjectPolicy<ArrayBufferWriter<byte>>
+    private class PacketBuilder : IPacketCollectionBuilder, IPacketCollectionFeature, IPooledObjectPolicy<ArrayBufferWriter<byte>>
     {
         private readonly Dictionary<TdsType, ITdsPacket> _lookup;
         private readonly ObjectPool<ArrayBufferWriter<byte>> _pool;
+        private readonly ITdsConnectionBuilder _builder;
 
-        public PacketBuilder()
+        public PacketBuilder(ITdsConnectionBuilder builder)
         {
             _lookup = new();
             _pool = new DefaultObjectPool<ArrayBufferWriter<byte>>(this);
-        }
-
-        public void AddPacket(TdsType type, Action<IPacketOptionBuilder> builder)
-        {
-            var options = new TdsPacketBuilder(type, _pool);
-
-            builder(options);
-
-            _lookup.Add(type, options);
+            _builder = builder;
         }
 
         public ITdsPacket? Get(TdsType type)
             => _lookup.TryGetValue(type, out var packet) ? packet : null;
+
+        IPacketOptionBuilder IPacketCollectionBuilder.AddPacket(TdsType type)
+        {
+            var options = new TdsPacketBuilder(type, _pool, _builder.New());
+
+            _lookup.Add(type, options);
+
+            return options;
+        }
 
         ArrayBufferWriter<byte> IPooledObjectPolicy<ArrayBufferWriter<byte>>.Create()
             => new ArrayBufferWriter<byte>();

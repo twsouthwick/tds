@@ -10,9 +10,9 @@ internal static class ThrowHelper
 #endif
         bool condition)
     {
-        if (condition)
+        if (!condition)
         {
-            throw new InvalidOperationException("");
+            throw new InvalidOperationException("TDS parsing failed");
         }
     }
 }

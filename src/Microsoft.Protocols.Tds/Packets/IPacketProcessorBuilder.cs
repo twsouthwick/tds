@@ -2,14 +2,16 @@
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-public interface IPacketProcessorBuilder
+public interface IPacketCollectionBuilder
 {
-    void AddPacket(TdsType type, Action<IPacketOptionBuilder> builder);
+    IPacketOptionBuilder AddPacket(TdsType type);
 }
 
 public interface IPacketOptionBuilder
 {
-    void Add(IPacketOption option);
+    IPacketOptionBuilder AddOption(IPacketOption option);
+
+    IPacketOptionBuilder AddHandler(Action<ITdsConnectionBuilder> builder);
 }
 
 public interface IPacketOption
