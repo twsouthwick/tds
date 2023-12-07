@@ -13,28 +13,28 @@ public class PreLoginTests(ITestOutputHelper output)
     {
         byte[] expected =
         [
-            // Header
+            // HEADER
             0x12, 0x01, 0x00, 0x3A, 0x00, 0x00, 0x01, 0x00, 
             
-            // HEADER VersionOption
-            0x00, 0x00, 0x24, 0x00, 0x06, 
-            // HEADER EncryptOption
-            0x01, 0x00, 0x2A, 0x00, 0x01, 
-            // HEADER InstanceOption
-            0x02, 0x00, 0x2B, 0x00, 0x01, 
-            // HEADER ThreadIdOption
-            0x03, 0x00, 0x2C, 0x00, 0x04, 
-            // HEADER MarsOption
-            0x04, 0x00, 0x30, 0x00, 0x01, 
-            // HEADER TraceIdOption
-            0x05, 0x00, 0x31, 0x00, 0x00, 
-            // HEADER FedAuthRequiredOption
+            // OPTION VersionOption
+            0x00, 0x00, 0x24, 0x00, 0x06,
+            // OPTION EncryptOption
+            0x01, 0x00, 0x2A, 0x00, 0x01,
+            // OPTION InstanceOption
+            0x02, 0x00, 0x2B, 0x00, 0x01,
+            // OPTION ThreadIdOption
+            0x03, 0x00, 0x2C, 0x00, 0x04,
+            // OPTION MarsOption
+            0x04, 0x00, 0x30, 0x00, 0x01,
+            // OPTION TraceIdOption
+            0x05, 0x00, 0x31, 0x00, 0x00,
+            // OPTION FedAuthRequiredOption
             0x06, 0x00, 0x31, 0x00, 0x01,
 
             0xFF,
             
             // DATA VersionOption
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
             // DATA EncryptOption
             0x00, 
             // DATA InstanceOption
@@ -85,7 +85,7 @@ public class PreLoginTests(ITestOutputHelper output)
         {
             var writer = new ArrayBufferWriter<byte>();
             packet.Write(context, writer);
-            output.WriteLine(packet.ToString(writer.WrittenMemory));
+            output.WriteLine(packet.ToString(writer.WrittenMemory, TdsPacketFormattingOptions.Code));
             Written.Add(writer.WrittenMemory.ToArray());
 
             return ValueTask.CompletedTask;

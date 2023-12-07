@@ -46,16 +46,16 @@ public static class DebuggingExtensions
                 other.Read(context, data);
             }
 
-            public string ToString(ReadOnlyMemory<byte> data)
+            public string ToString(ReadOnlyMemory<byte> data, TdsPacketFormattingOptions options)
             {
-                return other.ToString(data);
+                return other.ToString(data, options);
             }
 
             public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
             {
                 var otherWriter = new ArrayBufferWriter<byte>();
                 other.Write(context, otherWriter);
-                logger.LogTrace("{Type}: {Contents}", Type, ToString(otherWriter.WrittenMemory));
+                logger.LogTrace("{Contents}", ToString(otherWriter.WrittenMemory, TdsPacketFormattingOptions.Default));
                 writer.Write(otherWriter.WrittenSpan);
             }
         }

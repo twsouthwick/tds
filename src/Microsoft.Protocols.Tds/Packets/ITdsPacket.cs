@@ -12,6 +12,11 @@ public interface ITdsPacket
 
     ValueTask OnReadCompleteAsync(TdsConnectionContext context);
 
-    string ToString(ReadOnlyMemory<byte> data);
+    string ToString(ReadOnlyMemory<byte> data, TdsPacketFormattingOptions options);
 }
 
+public enum TdsPacketFormattingOptions
+{
+    Default,
+    Code
+}

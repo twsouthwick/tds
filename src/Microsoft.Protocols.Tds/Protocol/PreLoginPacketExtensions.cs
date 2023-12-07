@@ -23,7 +23,7 @@ public static class PreLoginPacketExtensions
 
     private sealed class VersionOption : IPacketOption
     {
-        private static readonly Version _emptyVersion = Version.Parse("0.0.0");
+        private static readonly Version _emptyVersion = new(0, 1, 0, 0);
 
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {

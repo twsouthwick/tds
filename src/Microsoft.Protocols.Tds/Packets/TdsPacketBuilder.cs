@@ -8,15 +8,32 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, ITdsConnectionBuilder builder) : ITdsPacket, IPacketBuilder
 {
-    private readonly List<IPacketOption> _items = [];
+    private const string Header = "HEADER";
+
+    private readonly List<(IPacketOption, string)> _items = [];
     private TdsConnectionDelegate? _next;
 
     public TdsType Type => type;
 
     IPacketBuilder IPacketBuilder.AddOption(IPacketOption option)
     {
-        _items.Add(option);
+        _items.Add((option, GetName(option)));
         return this;
+
+        static string GetName(IPacketOption packet)
+        {
+            var name = packet.GetType().Name;
+
+            if (name.EndsWith("Option", StringComparison.OrdinalIgnoreCase))
+            {
+                var length = name.Length - "Option".Length;
+                return name.Substring(0, length);
+            }
+            else
+            {
+                return name;
+            }
+        }
     }
 
     void ITdsPacket.Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -29,7 +46,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         {
             byte key = 0;
 
-            foreach (var option in _items)
+            foreach (var (option, _) in _items)
             {
                 var before = payload.WrittenCount;
 
@@ -74,24 +91,13 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         var count = 0;
         foreach (var item in reader)
         {
-            var current = _items[count++];
-            current.Read(context, item);
+            var (packet, _) = _items[count++];
+            packet.Read(context, item);
         }
     }
 
     ValueTask ITdsPacket.OnReadCompleteAsync(TdsConnectionContext context)
-    {
-        if (_next is { })
-        {
-            return _next(context);
-        }
-
-#if NET
-        return ValueTask.CompletedTask;
-#else
-        return default;
-#endif
-    }
+        => _next is { } ? _next(context) : default;
 
     private void WriteHeader(IBufferWriter<byte> writer, short length)
     {
@@ -120,7 +126,48 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         return this;
     }
 
-    string ITdsPacket.ToString(ReadOnlyMemory<byte> data)
+    string ITdsPacket.ToString(ReadOnlyMemory<byte> data, TdsPacketFormattingOptions options) => options switch
+    {
+        TdsPacketFormattingOptions.Code => CodeToString(data),
+        _ => DefaultToString(data),
+    };
+
+    private string DefaultToString(ReadOnlyMemory<byte> data)
+    {
+        var sw = new StringWriter();
+        var writer = new IndentedTextWriter(sw, " ");
+        var length = _items.Max(i => i.Item2.Length) + 1;
+
+        writer.Write(Header);
+        Padding(writer, Header, length);
+        WriteHex(writer, data.Span.Slice(0, 8), TdsPacketFormattingOptions.Default);
+        writer.WriteLine();
+        writer.WriteLine("-------------");
+
+        var count = 0;
+        foreach (var option in new OptionsReader(new ReadOnlySequence<byte>(data)))
+        {
+            var (_, name) = _items[count++];
+
+            writer.Write(name);
+            var padding = Padding(writer, name, length);
+            writer.Indent += padding;
+            WriteHex(writer, option.ToArray(), TdsPacketFormattingOptions.Default);
+            writer.Indent -= padding;
+            writer.WriteLine();
+        }
+
+        return sw.ToString();
+
+        static int Padding(TextWriter writer, string name, int length)
+        {
+            var padding = Math.Min(length - name.Length, length);
+            writer.Write(new string(' ', padding));
+            return padding;
+        }
+    }
+
+    private string CodeToString(ReadOnlyMemory<byte> data)
     {
         var sw = new StringWriter();
         var writer = new IndentedTextWriter(sw);
@@ -128,10 +175,10 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         try
         {
             writer.WriteLine("[");
-            writer.Indent += 1;
+            writer.Indent++;
 
-            writer.Write("// Header");
-            WriteHex(writer, data.Span.Slice(0, 8));
+            writer.WriteLine($"// {Header}");
+            WriteHex(writer, data.Span.Slice(0, 8), TdsPacketFormattingOptions.Code);
 
             writer.WriteLine();
 
@@ -140,8 +187,8 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
             var optionCount = 0;
             for (int i = 0; i < current.Length && current[i] != 0xFF; i += 5)
             {
-                WriteName(writer, "HEADER", _items[optionCount++]);
-                WriteHex(writer, current.Slice(i, 5));
+                WriteName(writer, "OPTION", optionCount++);
+                WriteHex(writer, current.Slice(i, 5), TdsPacketFormattingOptions.Code);
             }
 
             writer.WriteLine();
@@ -153,35 +200,8 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
             optionCount = 0;
             foreach (var contents in reader)
             {
-                WriteName(writer, "DATA", _items[optionCount++]);
-                WriteHex(writer, contents.ToArray());
-            }
-
-            static void WriteHex(TextWriter writer, ReadOnlySpan<byte> span)
-            {
-                if (span.Length == 0)
-                {
-                    writer.WriteLine();
-                    return;
-                }
-
-                var count = 0;
-                foreach (var item in span)
-                {
-                    if (count++ % 8 == 0)
-                    {
-                        writer.WriteLine();
-                    }
-                    else
-                    {
-                        writer.Write(", ");
-                    }
-
-                    writer.Write("0x");
-                    writer.Write(item.ToString("X2"));
-                }
-                writer.Write(", ");
-                writer.WriteLine();
+                WriteName(writer, "DATA", optionCount++);
+                WriteHex(writer, contents.ToArray(), TdsPacketFormattingOptions.Code);
             }
 
             writer.Indent--;
@@ -194,23 +214,60 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         }
 
         return sw.ToString();
+    }
 
-        static void WriteName(TextWriter writer, string header, IPacketOption packet)
+    private void WriteName(TextWriter writer, string header, int count)
+    {
+        writer.Write("// ");
+        writer.Write(header);
+        writer.Write(' ');
+        writer.WriteLine(_items[count].Item2);
+    }
+
+    private static void WriteHex(TextWriter writer, ReadOnlySpan<byte> span, TdsPacketFormattingOptions options)
+    {
+        if (span.Length == 0)
         {
-            writer.Write("// ");
-            writer.Write(header);
-            writer.Write(' ');
-
-            var name = packet.GetType().Name;
-
-            if (name.EndsWith("Option", StringComparison.OrdinalIgnoreCase))
+            if (options == TdsPacketFormattingOptions.Code)
             {
-                writer.Write(name.Substring(0, name.Length - "Option".Length));
+                writer.WriteLine();
+            }
+            return;
+        }
+
+        var count = 0;
+        foreach (var item in span)
+        {
+            if (count == 0)
+            {
+
+            }
+            else if (count % 8 == 0)
+            {
+                writer.WriteLine();
+            }
+            else if (options == TdsPacketFormattingOptions.Code)
+            {
+                writer.Write(", ");
             }
             else
             {
-                writer.Write(name);
+                writer.Write(" ");
             }
+
+            count++;
+
+            if (options == TdsPacketFormattingOptions.Code)
+            {
+                writer.Write("0x");
+            }
+
+            writer.Write(item.ToString("X2"));
+        }
+
+        if (options == TdsPacketFormattingOptions.Code)
+        {
+            writer.WriteLine(", ");
         }
     }
 }
