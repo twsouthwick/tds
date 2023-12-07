@@ -10,6 +10,6 @@ public interface ITdsPacket
 
     void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data);
 
-    ValueTask RunAsync(TdsConnectionContext context);
+    ValueTask OnReadCompleteAsync(TdsConnectionContext context);
 }
 

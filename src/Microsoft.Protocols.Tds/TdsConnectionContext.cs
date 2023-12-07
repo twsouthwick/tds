@@ -18,17 +18,17 @@ public class TdsConnectionContext
 
     public async ValueTask ReadPacketAsync(TdsType type)
     {
-        var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
+        var feature = _connection.FetchRequired(Features);
         var packet = GetPacket(type);
 
         await feature.ReadPacketAsync(packet);
-        await packet.RunAsync(this);
+        await packet.OnReadCompleteAsync(this);
     }
 
     public ValueTask SendPacketAsync(TdsType type)
     {
         var packet = GetPacket(type);
-        var feature = _connection.Fetch(Features) ?? throw new InvalidOperationException("No ITdsConnectionFeature available");
+        var feature = _connection.FetchRequired(Features);
 
         return feature.WritePacket(packet);
     }
@@ -36,6 +36,5 @@ public class TdsConnectionContext
     private ITdsPacket GetPacket(TdsType type)
         => Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new InvalidOperationException();
 }
-
 
 public delegate ValueTask TdsConnectionDelegate(TdsConnectionContext context);

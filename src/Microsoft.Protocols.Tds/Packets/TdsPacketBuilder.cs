@@ -78,7 +78,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         }
     }
 
-    ValueTask ITdsPacket.RunAsync(TdsConnectionContext context)
+    ValueTask ITdsPacket.OnReadCompleteAsync(TdsConnectionContext context)
     {
         if (_next is { })
         {
