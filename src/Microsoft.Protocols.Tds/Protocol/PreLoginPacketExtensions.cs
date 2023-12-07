@@ -23,14 +23,18 @@ public static class PreLoginPacketExtensions
 
     private sealed class VersionOption : IPacketOption
     {
-        private static readonly Version _version = typeof(IPacketCollectionBuilder).Assembly.GetName().Version ?? Version.Parse("0.0.0");
+        private static readonly Version _emptyVersion = Version.Parse("0.0.0");
 
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write(_version);
+        {
+            var version = context.Features.Get<IEnvironmentFeature>()?.Version ?? _emptyVersion;
+
+            writer.Write(version);
+        }
     }
 
     private sealed class EncryptOption : IPacketOption
@@ -60,7 +64,16 @@ public static class PreLoginPacketExtensions
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write(0);
+        {
+            if (context.Features.Get<IEnvironmentFeature>() is { } feature)
+            {
+                writer.Write(feature.ThreadId);
+            }
+            else
+            {
+                writer.Write(0);
+            }
+        }
     }
 
     private sealed class MarsOption : IPacketOption
