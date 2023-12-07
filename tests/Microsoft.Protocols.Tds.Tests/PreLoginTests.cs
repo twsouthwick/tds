@@ -16,35 +16,35 @@ public class PreLoginTests(ITestOutputHelper output)
             // HEADER
             0x12, 0x01, 0x00, 0x3A, 0x00, 0x00, 0x01, 0x00, 
             
-            // OPTION VersionOption
+            // OPTION Version
             0x00, 0x00, 0x24, 0x00, 0x06,
-            // OPTION EncryptOption
+            // OPTION Encrypt
             0x01, 0x00, 0x2A, 0x00, 0x01,
-            // OPTION InstanceOption
+            // OPTION Instance
             0x02, 0x00, 0x2B, 0x00, 0x01,
-            // OPTION ThreadIdOption
+            // OPTION ThreadId
             0x03, 0x00, 0x2C, 0x00, 0x04,
-            // OPTION MarsOption
+            // OPTION Mars
             0x04, 0x00, 0x30, 0x00, 0x01,
-            // OPTION TraceIdOption
+            // OPTION TraceId
             0x05, 0x00, 0x31, 0x00, 0x00,
-            // OPTION FedAuthRequiredOption
+            // OPTION FedAuthRequired
             0x06, 0x00, 0x31, 0x00, 0x01,
 
             0xFF,
             
-            // DATA VersionOption
+            // DATA Version
             0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
-            // DATA EncryptOption
+            // DATA Encrypt
             0x00, 
-            // DATA InstanceOption
+            // DATA Instance
             0x00, 
-            // DATA ThreadIdOption
+            // DATA ThreadId
             0x00, 0x00, 0x00, 0x00, 
-            // DATA MarsOption
+            // DATA Mars
             0x01, 
-            // DATA TraceIdOption
-            // DATA FedAuthRequiredOption
+            // DATA TraceId
+            // DATA FedAuthRequired
             0x01,
         ];
 

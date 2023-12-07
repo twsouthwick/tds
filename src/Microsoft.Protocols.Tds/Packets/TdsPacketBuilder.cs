@@ -10,7 +10,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
 {
     private const string Header = "HEADER";
 
-    private readonly List<(IPacketOption, string)> _items = [];
+    private readonly List<(IPacketOption Packet, string Name)> _items = [];
     private TdsConnectionDelegate? _next;
 
     public TdsType Type => type;
@@ -136,7 +136,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
     {
         var sw = new StringWriter();
         var writer = new IndentedTextWriter(sw, " ");
-        var length = _items.Max(i => i.Item2.Length) + 1;
+        var length = _items.Max(i => i.Name.Length) + 1;
 
         writer.Write(Header);
         Padding(writer, Header, length);
@@ -221,7 +221,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         writer.Write("// ");
         writer.Write(header);
         writer.Write(' ');
-        writer.WriteLine(_items[count].Item2);
+        writer.WriteLine(_items[count].Name);
     }
 
     private static void WriteHex(TextWriter writer, ReadOnlySpan<byte> span, TdsPacketFormattingOptions options)
