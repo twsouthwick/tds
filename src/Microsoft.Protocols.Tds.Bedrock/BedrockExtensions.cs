@@ -5,10 +5,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
-using System.Diagnostics;
 using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds
 {
@@ -38,7 +35,7 @@ namespace Microsoft.Protocols.Tds
             });
         }
 
-        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, IMessageReader<object>
+        private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>
         {
             public ProtocolWriter Writer { get; } = connection.CreateWriter();
 
@@ -49,13 +46,9 @@ namespace Microsoft.Protocols.Tds
             public ValueTask WritePacket(ITdsPacket packet)
                 => Writer.WriteAsync(this, packet, Token);
 
-            private ITdsPacket? _currentPacket;
-
             public async ValueTask ReadPacketAsync(ITdsPacket packet)
             {
-                Debug.Assert(_currentPacket is null);
-                _currentPacket = packet;
-                await Reader.ReadAsync(this, Token);
+                await Reader.ReadAsync(new PacketReader(ctx, packet), Token);
             }
 
             public void Abort() => connection.Abort();
@@ -63,18 +56,14 @@ namespace Microsoft.Protocols.Tds
             void IMessageWriter<ITdsPacket>.WriteMessage(ITdsPacket message, IBufferWriter<byte> output)
                 => message.Write(ctx, output);
 
-            bool IMessageReader<object>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out object message)
+            private sealed class PacketReader(TdsConnectionContext ctx, ITdsPacket packet) : IMessageReader<object>
             {
-                message = null!;
-
-                if (_currentPacket is { } current)
+                bool IMessageReader<object>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out object message)
                 {
-                    _currentPacket = null;
-                    current.Read(ctx, input);
+                    message = null!;
+                    packet.Read(ctx, input);
                     return true;
                 }
-
-                return false;
             }
         }
     }
