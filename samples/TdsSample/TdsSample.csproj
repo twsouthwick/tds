@@ -6,13 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Bedrock.Framework">
-      <Version>0.1.63-alpha.gf69fa1b135</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />
+    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
   </ItemGroup>
 </Project>

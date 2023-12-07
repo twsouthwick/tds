@@ -3,18 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Protocols.Tds;
 using Microsoft.Protocols.Tds.Packets;
 
-//var str = new SqlConnectionStringBuilder
-//{
-//    Authentication = SqlAuthenticationMethod.SqlPassword,
-//    UserID = "sa",
-//    Password = "<YourStrong!Passw0rd>",
-//    DataSource = "127.0.0.1",
-//    TrustServerCertificate = true
-//}.ToString();
-
-//using var conn = new SqlConnection(str);
-//await conn.OpenAsync();
-
 var services = new ServiceCollection();
 
 services.AddLogging(builder =>
