@@ -7,6 +7,7 @@ namespace Microsoft.Protocols.Tds;
 public class TdsConnectionContext
 {
     private FeatureReference<ITdsConnectionFeature> _connection = FeatureReference<ITdsConnectionFeature>.Default;
+    private FeatureReference<IPacketCollectionFeature> _collection = FeatureReference<IPacketCollectionFeature>.Default;
 
     public IFeatureCollection Features { get; } = new FeatureCollection();
 
@@ -33,8 +34,7 @@ public class TdsConnectionContext
         return feature.WritePacket(packet);
     }
 
-    private ITdsPacket GetPacket(TdsType type)
-        => Features.GetRequiredFeature<IPacketCollectionFeature>().Get(type) ?? throw new InvalidOperationException();
+    public ITdsPacket GetPacket(TdsType type) => _collection.FetchRequired(Features).Get(type) ?? throw new InvalidOperationException($"No known packet with type '{type}'");
 }
 
 public delegate ValueTask TdsConnectionDelegate(TdsConnectionContext context);

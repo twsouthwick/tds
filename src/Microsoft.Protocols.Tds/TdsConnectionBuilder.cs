@@ -8,7 +8,7 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
     {
         Properties = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            { nameof(Services), provider }
+            { nameof(Services), provider ?? this }
         };
     }
 

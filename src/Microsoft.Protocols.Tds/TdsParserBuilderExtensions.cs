@@ -39,10 +39,4 @@ public static class TdsParserBuilderExtensions
 
                await next(ctx);
            });
-
-    public static ITdsConnectionBuilder UseDebugging(this ITdsConnectionBuilder builder)
-        => builder.Use((ctx, next) =>
-        {
-            return next(ctx);
-        });
 }

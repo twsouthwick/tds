@@ -28,6 +28,7 @@ using var provider = services.BuildServiceProvider();
 var builder = TdsConnectionBuilder.Create(provider)
     .UseHostResolution()
     .UseDefaultPacketProcessor()
+    .UseLogging()
     .UseBedrock()
     .Use(async (ctx, next) =>
     {

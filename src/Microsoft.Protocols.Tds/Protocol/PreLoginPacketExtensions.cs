@@ -60,7 +60,7 @@ public static class PreLoginPacketExtensions
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write(Environment.CurrentManagedThreadId);
+            => writer.Write(0);
     }
 
     private sealed class MarsOption : IPacketOption

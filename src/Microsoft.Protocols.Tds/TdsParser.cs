@@ -3,6 +3,16 @@ using System.Net;
 
 namespace Microsoft.Protocols.Tds;
 
+public static class TdsFormatter
+{
+    private sealed class PacketFormatter : IFormattable
+    {
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
 public sealed class TdsParser(TdsConnectionDelegate tdsConnection, IServiceProvider services) : IConnectionStringFeature
 {
     public async ValueTask ExecuteAsync()

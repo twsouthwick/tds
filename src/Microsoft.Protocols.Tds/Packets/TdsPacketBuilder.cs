@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.ObjectPool;
 using Microsoft.Protocols.Tds;
 using System.Buffers;
+using System.CodeDom.Compiler;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Packets;
@@ -117,5 +118,99 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         _next = builder.Build();
 
         return this;
+    }
+
+    string ITdsPacket.ToString(ReadOnlyMemory<byte> data)
+    {
+        var sw = new StringWriter();
+        var writer = new IndentedTextWriter(sw);
+
+        try
+        {
+            writer.WriteLine("[");
+            writer.Indent += 1;
+
+            writer.Write("// Header");
+            WriteHex(writer, data.Span.Slice(0, 8));
+
+            writer.WriteLine();
+
+            var current = data.Span.Slice(8);
+
+            var optionCount = 0;
+            for (int i = 0; i < current.Length && current[i] != 0xFF; i += 5)
+            {
+                WriteName(writer, "HEADER", _items[optionCount++]);
+                WriteHex(writer, current.Slice(i, 5));
+            }
+
+            writer.WriteLine();
+            writer.WriteLine("0xFF,");
+
+            var reader = new OptionsReader(new ReadOnlySequence<byte>(data));
+
+            writer.WriteLine();
+            optionCount = 0;
+            foreach (var contents in reader)
+            {
+                WriteName(writer, "DATA", _items[optionCount++]);
+                WriteHex(writer, contents.ToArray());
+            }
+
+            static void WriteHex(TextWriter writer, ReadOnlySpan<byte> span)
+            {
+                if (span.Length == 0)
+                {
+                    writer.WriteLine();
+                    return;
+                }
+
+                var count = 0;
+                foreach (var item in span)
+                {
+                    if (count++ % 8 == 0)
+                    {
+                        writer.WriteLine();
+                    }
+                    else
+                    {
+                        writer.Write(", ");
+                    }
+
+                    writer.Write("0x");
+                    writer.Write(item.ToString("X2"));
+                }
+                writer.Write(", ");
+                writer.WriteLine();
+            }
+
+            writer.Indent--;
+            writer.Write("]");
+        }
+        catch
+        {
+            writer.WriteLine();
+            writer.Write("// INVALID PACKET!");
+        }
+
+        return sw.ToString();
+
+        static void WriteName(TextWriter writer, string header, IPacketOption packet)
+        {
+            writer.Write("// ");
+            writer.Write(header);
+            writer.Write(' ');
+
+            var name = packet.GetType().Name;
+
+            if (name.EndsWith("Option", StringComparison.OrdinalIgnoreCase))
+            {
+                writer.Write(name.Substring(0, name.Length - "Option".Length));
+            }
+            else
+            {
+                writer.Write(name);
+            }
+        }
     }
 }

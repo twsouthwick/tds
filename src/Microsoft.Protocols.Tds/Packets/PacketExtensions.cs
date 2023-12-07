@@ -15,16 +15,16 @@ public static class PacketExtensions
 
     public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketCollectionBuilder> configure)
     {
-        var packetBuilder = new PacketBuilder(builder.New());
+        var packetBuilder = new PacketCollectionBuilder(builder.New());
         configure(packetBuilder);
 
-        if (builder.Properties.TryGetValue(nameof(PacketBuilder), out var existing) && existing is IPacketCollectionBuilder existingBuilder)
+        if (builder.Properties.TryGetValue(nameof(PacketCollectionBuilder), out var existing) && existing is IPacketCollectionBuilder existingBuilder)
         {
             configure(existingBuilder);
             return builder;
         }
 
-        builder.Properties.Add(nameof(PacketBuilder), packetBuilder);
+        builder.Properties.Add(nameof(PacketCollectionBuilder), packetBuilder);
 
         return builder.Use((ctx, next) =>
         {
@@ -33,13 +33,13 @@ public static class PacketExtensions
         });
     }
 
-    private class PacketBuilder : IPacketCollectionBuilder, IPacketCollectionFeature, IPooledObjectPolicy<ArrayBufferWriter<byte>>
+    private class PacketCollectionBuilder : IPacketCollectionBuilder, IPacketCollectionFeature, IPooledObjectPolicy<ArrayBufferWriter<byte>>
     {
         private readonly Dictionary<TdsType, ITdsPacket> _lookup;
         private readonly ObjectPool<ArrayBufferWriter<byte>> _pool;
         private readonly ITdsConnectionBuilder _builder;
 
-        public PacketBuilder(ITdsConnectionBuilder builder)
+        public PacketCollectionBuilder(ITdsConnectionBuilder builder)
         {
             _lookup = new();
             _pool = new DefaultObjectPool<ArrayBufferWriter<byte>>(this);
@@ -63,7 +63,7 @@ public static class PacketExtensions
 
         bool IPooledObjectPolicy<ArrayBufferWriter<byte>>.Return(ArrayBufferWriter<byte> obj)
         {
-            obj.Clear();
+            obj.ResetWrittenCount();
             return true;
         }
     }
