@@ -11,6 +11,7 @@ public static class PacketExtensions
         => builder.UsePacketProcessor(packet =>
         {
             packet.AddPreLogin();
+            packet.AddLogin7();
         });
 
     public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketCollectionBuilder> configure)

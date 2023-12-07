@@ -12,6 +12,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
 
     private readonly List<(IPacketOption Packet, string Name)> _items = [];
     private TdsConnectionDelegate? _next;
+    private bool _addLengthToPayload;
 
     public TdsType Type => type;
 
@@ -67,7 +68,15 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
             // Mark end of options
             options.Write((byte)255);
 
-            WriteHeader(writer, (short)(options.WrittenCount + payload.WrittenCount));
+            var length = (short)(options.WrittenCount + payload.WrittenCount);
+
+            if (_addLengthToPayload)
+            {
+                options.Write((int)length);
+                length += 4;
+            }
+
+            WriteHeader(writer, length);
 
             writer.Write(options.WrittenSpan);
             writer.Write(payload.WrittenSpan);
@@ -269,5 +278,11 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         {
             writer.WriteLine(", ");
         }
+    }
+
+    public IPacketBuilder AddLength()
+    {
+        _addLengthToPayload = true;
+        return this;
     }
 }
