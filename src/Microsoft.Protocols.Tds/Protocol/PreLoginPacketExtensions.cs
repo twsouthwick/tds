@@ -1,7 +1,8 @@
 ﻿using Microsoft.Protocols.Tds.Features;
+using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 
-namespace Microsoft.Protocols.Tds.Packets;
+namespace Microsoft.Protocols.Tds.Protocol;
 
 public static class PreLoginPacketExtensions
 {
@@ -99,5 +100,4 @@ public static class PreLoginPacketExtensions
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
             => writer.Write(true);
     }
-
 }

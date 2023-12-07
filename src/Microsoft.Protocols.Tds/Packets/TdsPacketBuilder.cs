@@ -5,14 +5,14 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, ITdsConnectionBuilder builder) : ITdsPacket, IPacketOptionBuilder
+internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, ITdsConnectionBuilder builder) : ITdsPacket, IPacketBuilder
 {
     private readonly List<IPacketOption> _items = [];
     private TdsConnectionDelegate? _next;
 
     public TdsType Type => type;
 
-    IPacketOptionBuilder IPacketOptionBuilder.AddOption(IPacketOption option)
+    IPacketBuilder IPacketBuilder.AddOption(IPacketOption option)
     {
         _items.Add(option);
         return this;
@@ -106,7 +106,7 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
         writer.Write(ref header);
     }
 
-    IPacketOptionBuilder IPacketOptionBuilder.AddHandler(Action<ITdsConnectionBuilder> configure)
+    IPacketBuilder IPacketBuilder.AddHandler(Action<ITdsConnectionBuilder> configure)
     {
         if (_next is not null)
         {

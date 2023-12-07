@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.ObjectPool;
 using Microsoft.Protocols.Tds.Features;
+using Microsoft.Protocols.Tds.Protocol;
 using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
@@ -48,7 +49,7 @@ public static class PacketExtensions
         public ITdsPacket? Get(TdsType type)
             => _lookup.TryGetValue(type, out var packet) ? packet : null;
 
-        IPacketOptionBuilder IPacketCollectionBuilder.AddPacket(TdsType type)
+        IPacketBuilder IPacketCollectionBuilder.AddPacket(TdsType type)
         {
             var options = new TdsPacketBuilder(type, _pool, _builder.New());
 
