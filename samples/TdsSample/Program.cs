@@ -25,7 +25,7 @@ services.AddLogging(builder =>
 
 using var provider = services.BuildServiceProvider();
 
-var builder = TdsConnectionBuilder.Create(provider)
+var tds = TdsConnectionBuilder.Create(provider)
     .UseHostResolution()
     .UseDefaultPacketProcessor()
     .UseLogging()
@@ -37,7 +37,7 @@ var builder = TdsConnectionBuilder.Create(provider)
     })
     .Build();
 
-var parser = new TdsParser(builder, provider)
+var parser = new TdsParser(tds)
 {
     Host = "127.0.0.1"
 };

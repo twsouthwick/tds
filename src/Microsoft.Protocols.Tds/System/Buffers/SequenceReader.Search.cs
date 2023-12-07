@@ -8,8 +8,8 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace System.Buffers
-{
+namespace System.Buffers;
+
 	internal ref partial struct SequenceReader<T> where T : unmanaged, IEquatable<T>
 	{
 		/// <summary>
@@ -852,5 +852,4 @@ namespace System.Buffers
 			return false;
 		}
 	}
-}
 #endif
