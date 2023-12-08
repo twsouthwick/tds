@@ -10,19 +10,19 @@ public static class PreLoginPacketExtensions
     /// Adds implementations for the <see href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/60f56408-0188-4cd5-8b90-25c6f2423868">PRELOGIN</see> packet.
     /// </summary>
     public static void AddPreLogin(this IPacketCollectionBuilder builder)
-        => builder.AddPacket(TdsType.PreLogin)
-            .AddOption(new VersionOption())
-            .AddOption(new EncryptOption())
-            .AddOption(new InstanceOption())
-            .AddOption(new ThreadIdOption())
-            .AddOption(new MarsOption())
-            .AddOption(new TraceIdOption())
-            .AddOption(new FedAuthRequiredOption())
-            .AddHandler(builder => builder
-                .Use((ctx, next) =>
-                {
-                    return next(ctx);
-                }));
+        => builder.AddPacket(TdsType.PreLogin, packet =>
+        {
+            packet.AddOption(options =>
+            {
+                options.Add(new VersionOption());
+                options.Add(new EncryptOption());
+                options.Add(new InstanceOption());
+                options.Add(new ThreadIdOption());
+                options.Add(new MarsOption());
+                options.Add(new TraceIdOption());
+                options.Add(new FedAuthRequiredOption());
+            });
+        });
 
     private sealed class VersionOption : IPacketOption
     {

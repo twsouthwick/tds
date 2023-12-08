@@ -1,10 +1,15 @@
-﻿namespace Microsoft.Protocols.Tds.Packets;
+﻿using Microsoft.Extensions.ObjectPool;
+using System.Buffers;
+
+namespace Microsoft.Protocols.Tds.Packets;
 
 public interface IPacketBuilder
 {
-    IPacketBuilder AddLength();
+    IServiceProvider Services { get; }
 
-    IPacketBuilder AddOption(IPacketOption option);
+    IPacketBuilder AddWriter(WriterDelegate writer);
 
     IPacketBuilder AddHandler(Action<ITdsConnectionBuilder> builder);
+
+    ITdsPacket Build();
 }

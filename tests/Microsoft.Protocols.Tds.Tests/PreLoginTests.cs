@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Protocols.Tds.Tests;
 
-public class PreLoginTests(ITestOutputHelper output)
+public class PreLoginTests
 {
     [Fact]
     public async Task Test1Async()
@@ -50,7 +50,7 @@ public class PreLoginTests(ITestOutputHelper output)
 
         // Arrange
         var context = new TdsConnectionContext();
-        var connectionFeature = new TestConnection(output, context);
+        var connectionFeature = new TestConnection(context);
         var pipeline = TdsConnectionBuilder.Create()
             .UseDefaultPacketProcessor()
             .Use((ctx, next) =>
@@ -72,7 +72,7 @@ public class PreLoginTests(ITestOutputHelper output)
             c => Assert.Equal(c, expected));
     }
 
-    private sealed class TestConnection(ITestOutputHelper output, TdsConnectionContext context) : ITdsConnectionFeature
+    private sealed class TestConnection(TdsConnectionContext context) : ITdsConnectionFeature
     {
         public ValueTask ReadPacketAsync(ITdsPacket packet)
         {
@@ -85,7 +85,6 @@ public class PreLoginTests(ITestOutputHelper output)
         {
             var writer = new ArrayBufferWriter<byte>();
             packet.Write(context, writer);
-            output.WriteLine(packet.ToString(writer.WrittenMemory, TdsPacketFormattingOptions.Code));
             Written.Add(writer.WrittenMemory.ToArray());
 
             return ValueTask.CompletedTask;

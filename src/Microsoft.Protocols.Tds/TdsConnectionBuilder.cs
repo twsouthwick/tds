@@ -1,6 +1,9 @@
-﻿namespace Microsoft.Protocols.Tds;
+﻿using Microsoft.Extensions.ObjectPool;
+using System.Buffers;
 
-public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvider
+namespace Microsoft.Protocols.Tds;
+
+public sealed class TdsConnectionBuilder : ITdsConnectionBuilder
 {
     private readonly List<Func<TdsConnectionDelegate, TdsConnectionDelegate>> _components = new();
 
@@ -8,7 +11,7 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
     {
         Properties = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            { nameof(Services), provider ?? this }
+            { nameof(Services),  new WrappedProvider(provider) },
         };
     }
 
@@ -17,7 +20,7 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
         Properties = new CopyOnWriteDictionary<string, object?>(properties, StringComparer.Ordinal);
     }
 
-    public IServiceProvider Services => Properties.TryGetValue(nameof(Services), out var result) && result is IServiceProvider services ? services : this;
+    public IServiceProvider Services => Properties.TryGetValue(nameof(Services), out var result) && result is IServiceProvider services ? services : throw new InvalidOperationException();
 
     public IDictionary<string, object?> Properties { get; }
 
@@ -50,5 +53,39 @@ public sealed class TdsConnectionBuilder : ITdsConnectionBuilder, IServiceProvid
         return this;
     }
 
-    object? IServiceProvider.GetService(Type serviceType) => null;
+    private sealed class WrappedProvider : IServiceProvider, IPooledObjectPolicy<ArrayBufferWriter<byte>>
+    {
+        private readonly IServiceProvider? _other;
+        private readonly DefaultObjectPool<ArrayBufferWriter<byte>> _pool;
+
+        public WrappedProvider(IServiceProvider? other)
+        {
+            _other = other;
+            _pool = new DefaultObjectPool<ArrayBufferWriter<byte>>(this);
+        }
+
+        object? IServiceProvider.GetService(Type serviceType)
+        {
+            if (_other?.GetService(serviceType) is { } existing)
+            {
+                return existing;
+            }
+
+            if (serviceType == typeof(ObjectPool<ArrayBufferWriter<byte>>))
+            {
+                return _pool;
+            }
+
+            return null;
+        }
+
+        ArrayBufferWriter<byte> IPooledObjectPolicy<ArrayBufferWriter<byte>>.Create()
+            => new ArrayBufferWriter<byte>();
+
+        bool IPooledObjectPolicy<ArrayBufferWriter<byte>>.Return(ArrayBufferWriter<byte> obj)
+        {
+            obj.ResetWrittenCount();
+            return true;
+        }
+    }
 }

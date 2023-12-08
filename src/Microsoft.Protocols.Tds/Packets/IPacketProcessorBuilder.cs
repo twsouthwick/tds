@@ -2,5 +2,5 @@
 
 public interface IPacketCollectionBuilder
 {
-    IPacketBuilder AddPacket(TdsType type);
+    void AddPacket(TdsType type, Action<IPacketBuilder> configure);
 }

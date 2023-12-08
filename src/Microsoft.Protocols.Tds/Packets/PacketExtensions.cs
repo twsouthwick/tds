@@ -50,13 +50,13 @@ public static class PacketExtensions
         public ITdsPacket? Get(TdsType type)
             => _lookup.TryGetValue(type, out var packet) ? packet : null;
 
-        IPacketBuilder IPacketCollectionBuilder.AddPacket(TdsType type)
+        void IPacketCollectionBuilder.AddPacket(TdsType type, Action<IPacketBuilder> configure)
         {
             var options = new TdsPacketBuilder(type, _pool, _builder.New());
 
-            _lookup.Add(type, options);
+            configure(options);
 
-            return options;
+            _lookup.Add(type, options.Build());
         }
 
         ArrayBufferWriter<byte> IPooledObjectPolicy<ArrayBufferWriter<byte>>.Create()
