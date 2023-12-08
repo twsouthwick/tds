@@ -58,6 +58,9 @@ internal static class BufferWriterExtensions
         span[3] = (byte)(0x000000ff & value);
     }
 
+    public static void Write(this IBufferWriter<byte> writer, long value)
+        => writer.Write(ref value);
+
     public static void Write<T>(this IBufferWriter<byte> writer, ref T value)
         where T : struct
     {

@@ -21,6 +21,8 @@ var tds = TdsConnectionBuilder.Create(provider)
     {
         await ctx.SendPacketAsync(TdsType.PreLogin);
         await ctx.ReadPacketAsync(TdsType.PreLogin);
+        await ctx.SendPacketAsync(TdsType.Login7);
+        //await ctx.ReadPacketAsync(TdsType.Login7);
     })
     .Build();
 
