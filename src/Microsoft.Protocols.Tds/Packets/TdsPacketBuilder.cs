@@ -1,17 +1,12 @@
-﻿using Microsoft.Extensions.ObjectPool;
-using Microsoft.Protocols.Tds;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.ObjectPool;
 using System.Buffers;
-using System.CodeDom.Compiler;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, ITdsConnectionBuilder builder) : IPacketBuilder
+internal class TdsPacketBuilder(TdsType type, ITdsConnectionBuilder builder) : IPacketBuilder
 {
-    private WriterDelegate? _writer;
-
-    public ObjectPool<ArrayBufferWriter<byte>> Pool => pool;
+    private readonly List<Func<WriterDelegate, WriterDelegate>> _middleware = new();
 
     public IServiceProvider Services => builder.Services;
 
@@ -22,11 +17,20 @@ internal class TdsPacketBuilder(TdsType type, ObjectPool<ArrayBufferWriter<byte>
     }
 
     public ITdsPacket Build()
-        => new ConfiguredTdsPacket(type, pool, _writer, builder.Build());
-
-    public IPacketBuilder AddWriter(WriterDelegate writer)
     {
-        _writer += writer;
+        WriterDelegate end = (_, _) => { };
+
+        for (int i = _middleware.Count - 1; i >= 0; i--)
+        {
+            end = _middleware[i](end);
+        }
+
+        return new ConfiguredTdsPacket(type, builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>(), end, builder.Build());
+    }
+
+    public IPacketBuilder Use(Func<WriterDelegate, WriterDelegate> middleware)
+    {
+        _middleware.Add(middleware);
         return this;
     }
 }

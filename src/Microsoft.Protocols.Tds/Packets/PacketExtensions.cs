@@ -1,8 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.ObjectPool;
-using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Protocol;
-using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
@@ -17,7 +14,7 @@ public static class PacketExtensions
 
     public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketCollectionBuilder> configure)
     {
-        var packetBuilder = new PacketCollectionBuilder(builder.New(), builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>());
+        var packetBuilder = new PacketCollectionBuilder(builder.New());
         configure(packetBuilder);
 
         if (builder.Properties.TryGetValue(nameof(PacketCollectionBuilder), out var existing) && existing is IPacketCollectionBuilder existingBuilder)
@@ -35,7 +32,7 @@ public static class PacketExtensions
         });
     }
 
-    private class PacketCollectionBuilder(ITdsConnectionBuilder builder, ObjectPool<ArrayBufferWriter<byte>> pool) : IPacketCollectionBuilder, IPacketCollectionFeature
+    private class PacketCollectionBuilder(ITdsConnectionBuilder builder) : IPacketCollectionBuilder, IPacketCollectionFeature
     {
         private readonly Dictionary<TdsType, ITdsPacket> _lookup = new();
 
@@ -43,7 +40,7 @@ public static class PacketExtensions
 
         void IPacketCollectionBuilder.AddPacket(TdsType type, Action<IPacketBuilder> configure)
         {
-            var options = new TdsPacketBuilder(type, pool, builder.New());
+            var options = new TdsPacketBuilder(type, builder.New());
 
             configure(options);
 

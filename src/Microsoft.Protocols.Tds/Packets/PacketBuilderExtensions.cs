@@ -8,6 +8,16 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public static class PacketBuilderExtensions
 {
+    public static IPacketBuilder AddWriter(this IPacketBuilder builder, WriterDelegate action)
+        => builder.Use((ctx, writer, next) =>
+        {
+            action(ctx, writer);
+            next(ctx, writer);
+        });
+
+    public static IPacketBuilder Use(this IPacketBuilder builder, Action<TdsConnectionContext, IBufferWriter<byte>, WriterDelegate> middleware)
+        => builder.Use(next => (ctx, writer) => middleware(ctx, writer, next));
+
     public static IPacketBuilder AddOption(this IPacketBuilder builder, Action<IList<IPacketOption>> configure)
     {
         var options = new List<IPacketOption>();

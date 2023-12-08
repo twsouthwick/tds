@@ -1,14 +1,6 @@
 ﻿using Microsoft.Protocols.Tds.Packets;
-using System.Buffers;
-using System.Collections;
-using System.Collections.Specialized;
-using System.Numerics;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds.Protocol;
-
-using DWORD = int;
-
 public static class Login7PacketExtensions
 {
     /// <summary>
