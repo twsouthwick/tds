@@ -24,7 +24,7 @@ public static class PacketBuilderExtensions
 
         configure(options);
 
-        var pool = builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>();
+        var pool = builder.GetBufferWriterPool();
 
         builder.AddWriter((context, writer) =>
         {
@@ -69,33 +69,50 @@ public static class PacketBuilderExtensions
         return builder;
     }
 
-    public static IPacketBuilder AddWriter(this IPacketBuilder builder, WriterDelegate writer, bool addLength)
+    public static IPacketBuilder UseNewWriter(this IPacketBuilder builder, WriterDelegate writer)
     {
-        if (!addLength)
-        {
-            return builder.AddWriter(writer);
-        }
-        else
-        {
-            var pool = builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>();
+        var pool = builder.GetBufferWriterPool();
 
-            return builder.AddWriter((ctx, w) =>
+        return builder.AddWriter((ctx, w) =>
+        {
+            var payloadWriter = pool.Get();
+
+            try
             {
-                var payloadWriter = pool.Get();
+                writer(ctx, payloadWriter);
 
-                try
-                {
-                    writer(ctx, payloadWriter);
-
-                    w.Write(payloadWriter.WrittenCount);
-                    w.Write(payloadWriter.WrittenSpan);
-                }
-                finally
-                {
-                    pool.Return(payloadWriter);
-                }
-            });
-        }
-
+                w.Write(payloadWriter.WrittenSpan);
+            }
+            finally
+            {
+                pool.Return(payloadWriter);
+            }
+        });
     }
+
+    public static IPacketBuilder UseLengthPrefix(this IPacketBuilder builder, WriterDelegate writer)
+    {
+        var pool = builder.GetBufferWriterPool();
+
+        return builder.AddWriter((ctx, w) =>
+        {
+            var payloadWriter = pool.Get();
+
+            try
+            {
+                writer(ctx, payloadWriter);
+
+                w.Write(payloadWriter.WrittenCount);
+                w.Write(payloadWriter.WrittenSpan);
+            }
+            finally
+            {
+                pool.Return(payloadWriter);
+            }
+        });
+    }
+
+    internal static ObjectPool<ArrayBufferWriter<byte>> GetBufferWriterPool(this IPacketBuilder builder)
+        => builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>();
 }
+

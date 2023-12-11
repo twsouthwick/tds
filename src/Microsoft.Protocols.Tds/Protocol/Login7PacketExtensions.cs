@@ -7,9 +7,12 @@ public static class Login7PacketExtensions
     /// Adds implementations for the <see href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/773a62b6-ee89-4c02-9e5e-344882630aac">LOGIN7</see> packet
     /// </summary>
     public static void AddLogin7(this IPacketCollectionBuilder builder)
-        => builder.AddPacket(TdsType.Login7, packet =>
+    {
+        builder.AddPacket(TdsType.Login7, packet =>
         {
-            packet.AddWriter((context, writer) =>
+            var pool = packet.GetBufferWriterPool();
+
+            packet.UseLengthPrefix((context, writer) =>
             {
                 // TDS Version
                 writer.Write(0x00_00_00_80);
@@ -44,10 +47,9 @@ public static class Login7PacketExtensions
 
                 // ClientLCI
                 writer.Write((int)0);
-
-
-            }, addLength: true);
+            });
         });
+    }
 
     [Flags]
     private enum OptionFlag1 : Byte
