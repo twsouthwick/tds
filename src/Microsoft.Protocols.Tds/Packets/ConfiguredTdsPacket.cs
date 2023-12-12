@@ -4,7 +4,7 @@ using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, WriterDelegate? _writer) : ITdsPacket
+internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, WriterDelegate _writer) : ITdsPacket
 {
     public TdsType Type => type;
 
@@ -14,7 +14,7 @@ internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWr
 
         try
         {
-            _writer?.Invoke(context, payload);
+            _writer(context, payload);
 
             WriteHeader(writer, (short)payload.WrittenCount);
 
