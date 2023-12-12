@@ -54,48 +54,50 @@ public static class Login7PacketExtensions
                 writer.Write((int)0);
 
                 var payload = pool.Get();
-                var items1 = OffsetWriter.Create(10, writer, payload);
+                var offset = OffsetWriter.Create(
+                    13, // Items added to payload needs to be known up front 
+                    writer,
+                    payload,
+                    additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element
 
                 var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
-                items1.Add(sqlUser?.HostName ?? string.Empty); // HostName
-                items1.Add(sqlUser?.UserName ?? string.Empty); // UserName
-                items1.Add(sqlUser?.Password ?? string.Empty); // Password
-
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
-                items1.Add(env.AppName); // AppName
-                items1.Add(env.ServerName); // ServerName
-                items1.Add(string.Empty); // Unused
-                items1.Add(string.Empty); // Extension
-                items1.Add(string.Empty); // CltIntName
-                items1.Add(string.Empty); // Language
-                items1.Add(conn.Database); // Database
+                offset.WritePayload(sqlUser?.HostName ?? string.Empty); // HostName
+                offset.WritePayload(sqlUser?.UserName ?? string.Empty); // UserName
+                offset.WritePayload(sqlUser?.Password ?? string.Empty); // Password
+                offset.WritePayload(env.AppName); // AppName
+                offset.WritePayload(env.ServerName); // ServerName
+                offset.WritePayload(); // Unused
+                offset.WritePayload(); // Extension
+                offset.WritePayload(); // CltIntName
+                offset.WritePayload(); // Language
+                offset.WritePayload(conn.Database); // Database
 
                 if (env.ClientId is not { Length: 6 })
                 {
                     throw new InvalidOperationException("ClientID must be 6 bytes");
                 }
 
-                payload.Write(env.ClientId); // ClientId - NIC?
-
-                var items2 = OffsetWriter.Create(3, writer, payload);
+                offset.WriteOffset(env.ClientId); // ClientId - NIC?
 
                 if (context.Features.Get<ISspiAuthenticationFeature>() is { } sspi)
                 {
-                    sspi.WriteBlock(Array.Empty<byte>(), payload);
+                    offset.WritePayload(sspi);
                 }
                 else
                 {
-                    items2.Add(string.Empty); // SSPI
+                    offset.WritePayload(); // SSPI
                 }
 
-                items2.Add(string.Empty); // AtchDBFile
-                items2.Add(string.Empty); // ChangePassword
+                offset.WritePayload(); // AtchDBFile
+                offset.WritePayload(); // ChangePassword
 
-                payload.Write((int)0); // reserved for chSSPI
+                offset.WriteOffset(new byte[] { 0, 0, 0, }); // reserved for chSSPI
 
-                writer.Write(payload.WrittenSpan);
+                offset.Complete();
+
 
                 next(context, writer);
             });

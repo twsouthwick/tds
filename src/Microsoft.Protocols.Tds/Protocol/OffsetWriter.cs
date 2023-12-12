@@ -5,44 +5,76 @@ using System.Text;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 
-internal ref struct OffsetWriter(Span<byte> offset, ArrayBufferWriter<byte> payload)
+internal ref struct OffsetWriter(Span<byte> offset, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload)
 {
-    private readonly Span<byte> offset = offset;
-    private int count = 0;
+    private int offsetLength = offset.Length;
+    private Span<byte> _currentBuffer = offset;
 
-    public void Add(string name)
+    private readonly void WriteOffset()
     {
-        BinaryPrimitives.WriteInt16LittleEndian(offset.Slice(4 * count, 2), (short)payload.WrittenCount);
-        var length = Encoding.Unicode.GetBytes(name, payload);
-        BinaryPrimitives.WriteInt16LittleEndian(offset.Slice(4 * count + 2, 2), (short)length);
-        count++;
+        var o = (short)(offsetLength + payload.WrittenCount);
+        BinaryPrimitives.WriteInt16LittleEndian(_currentBuffer.Slice(0, 2), o);
     }
 
-    public void Add(ISspiAuthenticationFeature sspi)
+    private readonly void WriteLength(long length)
     {
-        BinaryPrimitives.WriteInt16LittleEndian(offset.Slice(4 * count, 2), (short)payload.WrittenCount);
+        BinaryPrimitives.WriteInt16LittleEndian(_currentBuffer.Slice(2, 2), (short)length);
+    }
+
+    public void AddPayload(ReadOnlySpan<byte> items)
+    {
+        WriteOffset();
+        payload.Write(items);
+        WriteLength(items.Length);
+        Advance();
+    }
+
+    private void Advance()
+    {
+        _currentBuffer = _currentBuffer.Slice(4);
+    }
+
+    public void WritePayload()
+    {
+        WriteOffset();
+        WriteLength(0);
+        Advance();
+    }
+
+    public void WritePayload(string name)
+    {
+        WriteOffset();
+        var length = Encoding.Unicode.GetBytes(name, payload);
+        WriteLength(length);
+        Advance();
+    }
+
+    public void WritePayload(ISspiAuthenticationFeature sspi)
+    {
+        WriteOffset();
         var length = payload.WrittenCount;
         sspi.WriteBlock(Array.Empty<byte>(), payload);
-        BinaryPrimitives.WriteInt16LittleEndian(offset.Slice(4 * count + 2, 2), (short)(payload.WrittenCount - length));
-        count++;
+        WriteLength(payload.WrittenCount - length);
+        Advance();
     }
 
-    public readonly void AddOffset(short offset)
+    public void WriteOffset(ReadOnlySpan<byte> bytes)
     {
-        for (int i = 0; i < count; i += 4)
-        {
-            var slice = this.offset.Slice(i, 2);
-            var current = BinaryPrimitives.ReadInt16LittleEndian(slice);
-            BinaryPrimitives.WriteInt16LittleEndian(slice, (short)(current + offset));
-        }
+        bytes.CopyTo(_currentBuffer);
+        _currentBuffer = _currentBuffer.Slice(bytes.Length);
     }
 
-    public static OffsetWriter Create(int count, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload)
+    public void Complete()
     {
-        var hint = count * 4;
-        var span = writer.GetSpan(hint);
+        writer.Write(payload.WrittenSpan);
+    }
+
+    public static OffsetWriter Create(int count, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload, int additionalCount = 0)
+    {
+        var hint = count * 4 + additionalCount;
+        var span = writer.GetSpan(hint).Slice(0, hint);
         writer.Advance(hint);
 
-        return new OffsetWriter(span, payload);
+        return new OffsetWriter(span, writer, payload);
     }
 }
