@@ -48,8 +48,8 @@ public static class BedrockExtensions
 
         public async ValueTask ReadPacketAsync(ITdsPacket packet)
         {
-            await Reader.ReadAsync(new PacketReader(ctx, packet), Token);
             Reader.Advance();
+            await Reader.ReadAsync(new PacketReader(ctx, packet), Token);
         }
 
         public void Abort() => connection.Abort();
@@ -62,7 +62,15 @@ public static class BedrockExtensions
             bool IMessageReader<object>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out object message)
             {
                 message = null!;
+
+                if (input.Length == 0)
+                {
+                    return false;
+                }
+
                 packet.Read(ctx, input);
+                consumed = input.End;
+                examined = input.End;
                 return true;
             }
         }

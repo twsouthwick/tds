@@ -2,6 +2,7 @@
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
+using System.Globalization;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 
@@ -14,6 +15,7 @@ public static class Login7PacketExtensions
     {
         builder.AddPacket(TdsType.Login7, packet =>
         {
+            var chSSPI = new byte[] { 0, 0, 0, 0 };
             var pool = packet.GetBufferWriterPool();
 
             packet.UseLength();
@@ -50,8 +52,8 @@ public static class Login7PacketExtensions
                 // ClientTimeZone
                 writer.Write((int)0);
 
-                // ClientLCI
-                writer.Write((int)0);
+                // ClientLCID
+                writer.Write((int)CultureInfo.CurrentCulture.LCID);
 
                 var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
@@ -94,7 +96,7 @@ public static class Login7PacketExtensions
                 offset.WritePayload(); // AtchDBFile
                 offset.WritePayload(); // ChangePassword
 
-                offset.WriteOffset(new byte[] { 0, 0, 0, }); // reserved for chSSPI
+                offset.WriteOffset(chSSPI); // reserved for chSSPI
 
                 offset.Complete();
 
