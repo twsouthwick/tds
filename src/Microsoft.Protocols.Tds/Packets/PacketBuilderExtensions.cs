@@ -76,7 +76,7 @@ public static class PacketBuilderExtensions
             {
                 next(ctx, payloadWriter);
 
-                w.Write(payloadWriter.WrittenCount);
+                w.WriteLittleEndian(payloadWriter.WrittenCount);
                 w.Write(payloadWriter.WrittenSpan);
             }
             finally

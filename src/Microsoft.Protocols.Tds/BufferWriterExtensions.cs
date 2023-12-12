@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -7,21 +8,6 @@ namespace Microsoft.Protocols.Tds;
 
 internal static class BufferWriterExtensions
 {
-    public static void Write(this Span<byte> span, short value)
-    {
-        span[0] = (byte)((value & 0xff00) >> 8);
-        span[1] = (byte)(value & 0x00ff);
-    }
-
-    public static void Write(this IBufferWriter<byte> writer, short value)
-    {
-        var span = writer.GetSpan(2);
-
-        span.Write(value);
-
-        writer.Advance(2);
-    }
-
     public static void WriteNullTerminated(this IBufferWriter<byte> writer, string str)
     {
 #if NET
@@ -43,23 +29,19 @@ internal static class BufferWriterExtensions
         writer.Advance(1);
     }
 
-    public static void Write(this IBufferWriter<byte> writer, uint value)
+    public static void WriteLittleEndian(this IBufferWriter<byte> writer, uint value)
     {
         var span = writer.GetSpan(4);
-        span.Write(value);
+        BinaryPrimitives.WriteUInt32LittleEndian(span, value);
         writer.Advance(4);
     }
 
-    public static void Write(this Span<byte> span, uint value)
+    public static void WriteBigEndian(this IBufferWriter<byte> writer, uint value)
     {
-        span[0] = (byte)((0xff000000 & value) >> 24);
-        span[1] = (byte)((0x00ff0000 & value) >> 16);
-        span[2] = (byte)((0x0000ff00 & value) >> 8);
-        span[3] = (byte)(0x000000ff & value);
+        var span = writer.GetSpan(4);
+        BinaryPrimitives.WriteUInt32BigEndian(span, value);
+        writer.Advance(4);
     }
-
-    public static void Write(this IBufferWriter<byte> writer, long value)
-        => writer.Write(ref value);
 
     public static void Write<T>(this IBufferWriter<byte> writer, ref T value)
         where T : struct
@@ -75,8 +57,11 @@ internal static class BufferWriterExtensions
     public static void Write(this IBufferWriter<byte> writer, bool value)
         => writer.Write((byte)(value ? 1 : 0));
 
-    public static void Write(this IBufferWriter<byte> writer, int value)
-        => writer.Write((uint)value);
+    public static void WriteBigEndian(this IBufferWriter<byte> writer, int value)
+        => writer.WriteBigEndian((uint)value);
+
+    public static void WriteLittleEndian(this IBufferWriter<byte> writer, int value)
+        => writer.WriteLittleEndian((uint)value);
 
     public static void Write(this IBufferWriter<byte> writer, Version version)
     {

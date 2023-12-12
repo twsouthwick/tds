@@ -22,19 +22,19 @@ public static class Login7PacketExtensions
             packet.Use((context, writer, next) =>
             {
                 // TDS Version
-                writer.Write(0x00_00_00_80);
+                writer.WriteLittleEndian(0x00_00_00_80);
 
                 // Packet Size
-                writer.Write(0x00_10_00_00);
+                writer.WriteLittleEndian(0x00_10_00_00);
 
                 // ClientProgVer
-                writer.Write(0x00_00_00_07);
+                writer.WriteLittleEndian(0x00_00_00_07);
 
                 // ClientPID
-                writer.Write(0x00_00_00_01);
+                writer.WriteLittleEndian(0x00_00_00_01);
 
                 // ConnectionID
-                writer.Write(0x00_00_00_01);
+                writer.WriteLittleEndian(0x00_00_00_00);
 
                 // OptionFlag1
                 var optionFlag1 = OptionFlag1.None;
@@ -50,18 +50,20 @@ public static class Login7PacketExtensions
                 writer.Write((byte)0);
 
                 // ClientTimeZone
-                writer.Write((int)0);
+                writer.WriteLittleEndian((int)0);
 
                 // ClientLCID
-                writer.Write((int)CultureInfo.CurrentCulture.LCID);
+                writer.WriteLittleEndian((int)CultureInfo.CurrentCulture.LCID);
 
                 var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
+                var initialOffset = ((ArrayBufferWriter<byte>)writer).WrittenCount + 4;
                 var payload = pool.Get();
                 var offset = OffsetWriter.Create(
                     13, // Items added to payload needs to be known up front 
+                    initialOffset,
                     writer,
                     payload,
                     additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element

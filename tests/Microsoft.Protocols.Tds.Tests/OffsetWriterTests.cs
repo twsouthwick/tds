@@ -45,6 +45,29 @@ public class OffsetWriterTests
     }
 
     [Fact]
+    public void SingleEntryInitialOffset()
+    {
+        const string Message = "Hello";
+
+        // Arrange
+        var writer = new ArrayBufferWriter<byte>();
+        writer.Write(new byte[] { 1 });
+
+        var payload = new ArrayBufferWriter<byte>();
+        var offsetWriter = OffsetWriter.Create(1, writer, payload);
+
+        // Act
+        offsetWriter.WritePayload(Message);
+        offsetWriter.Complete();
+
+        // Assert
+        var expected = new byte[] { 1, 5, 0, 10, 0 }
+            .Concat(Encoding.Unicode.GetBytes(Message))
+            .ToArray();
+        Assert.Equal(expected, writer.WrittenSpan.ToArray());
+    }
+
+    [Fact]
     public void TwoEntries()
     {
         const string Message1 = "Hello";

@@ -5,14 +5,13 @@ using System.Text;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 
-internal struct OffsetWriter(int length, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload)
+internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload)
 {
     private int count = 0;
-    private int offsetLength = length;
 
     private readonly void WriteOffset(Span<byte> buffer)
     {
-        var o = (short)(offsetLength + payload.WrittenCount);
+        var o = (short)(initialOffset + length + payload.WrittenCount);
         BinaryPrimitives.WriteInt16LittleEndian(buffer.Slice(0, 2), o);
     }
 
@@ -79,10 +78,13 @@ internal struct OffsetWriter(int length, IBufferWriter<byte> writer, ArrayBuffer
         writer.Write(payload.WrittenSpan);
     }
 
-    public static OffsetWriter Create(int count, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload, int additionalCount = 0)
+    public static OffsetWriter Create(int count, ArrayBufferWriter<byte> writer, ArrayBufferWriter<byte> payload, int additionalCount = 0)
+        => Create(count, writer.WrittenCount, writer, payload, additionalCount);
+
+    public static OffsetWriter Create(int count, int initialOffset, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload, int additionalCount = 0)
     {
         var max = count * 4 + additionalCount;
 
-        return new OffsetWriter(max, writer, payload);
+        return new OffsetWriter(max, initialOffset, writer, payload);
     }
 }

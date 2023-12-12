@@ -68,11 +68,11 @@ public static class PreLoginPacketExtensions
         {
             if (context.Features.Get<IEnvironmentFeature>() is { } feature)
             {
-                writer.Write(feature.ThreadId);
+                writer.WriteBigEndian(feature.ThreadId);
             }
             else
             {
-                writer.Write(0);
+                writer.WriteBigEndian(0);
             }
         }
     }
@@ -100,7 +100,7 @@ public static class PreLoginPacketExtensions
             {
                 writer.Write(traceId);
                 writer.Write(feature.ActivityId);
-                writer.Write(feature.SequenceId);
+                writer.WriteBigEndian(feature.SequenceId);
             }
         }
     }
