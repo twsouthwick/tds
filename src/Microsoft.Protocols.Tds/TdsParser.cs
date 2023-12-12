@@ -1,15 +1,20 @@
 ﻿using Microsoft.Protocols.Tds.Features;
 using System.Net;
+using System.Net.NetworkInformation;
+using System.Security.Cryptography;
 
 namespace Microsoft.Protocols.Tds;
 
-public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnectionStringFeature
+public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnectionStringFeature, IEnvironmentFeature
 {
+    private static readonly Version _version = typeof(TdsParser).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
+
     public async ValueTask ExecuteAsync()
     {
         var context = new TdsConnectionContext();
 
         context.Features.Set<IConnectionStringFeature>(this);
+        context.Features.Set<IEnvironmentFeature>(this);
 
         await tdsConnection(context);
     }
@@ -23,4 +28,30 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
     public IPAddress? IPAddress { get; set; }
 
     public required string Database { get; init; }
+
+    public Version Version => _version;
+
+    public int ThreadId => Environment.CurrentManagedThreadId;
+
+    public string HostName => Environment.MachineName;
+
+    public required string AppName { get; init; }
+
+    public required string ServerName { get; init; }
+
+    public ReadOnlySpan<byte> ClientId => GetClientId.Value.AsSpan(0, 6);
+
+    private static Lazy<byte[]> GetClientId = new Lazy<byte[]>(() =>
+    {
+        foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (nic.OperationalStatus == OperationalStatus.Up)
+            {
+                return nic.GetPhysicalAddress().GetAddressBytes();
+            }
+        }
+
+        return new byte[6];
+
+    }, isThreadSafe: true);
 }

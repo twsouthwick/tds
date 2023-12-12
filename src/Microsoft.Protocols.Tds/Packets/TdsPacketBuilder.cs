@@ -10,12 +10,6 @@ internal class TdsPacketBuilder(TdsType type, ITdsConnectionBuilder builder) : I
 
     public IServiceProvider Services => builder.Services;
 
-    IPacketBuilder IPacketBuilder.AddHandler(Action<ITdsConnectionBuilder> configure)
-    {
-        configure(builder);
-        return this;
-    }
-
     public ITdsPacket Build()
     {
         WriterDelegate end = (_, _) => { };
@@ -25,7 +19,7 @@ internal class TdsPacketBuilder(TdsType type, ITdsConnectionBuilder builder) : I
             end = _middleware[i](end);
         }
 
-        return new ConfiguredTdsPacket(type, builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>(), end, builder.Build());
+        return new ConfiguredTdsPacket(type, builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>(), end);
     }
 
     public IPacketBuilder Use(Func<WriterDelegate, WriterDelegate> middleware)

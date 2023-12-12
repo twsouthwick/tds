@@ -8,13 +8,6 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public static class PacketBuilderExtensions
 {
-    public static IPacketBuilder AddWriter(this IPacketBuilder builder, WriterDelegate action)
-        => builder.Use((ctx, writer, next) =>
-        {
-            action(ctx, writer);
-            next(ctx, writer);
-        });
-
     public static IPacketBuilder Use(this IPacketBuilder builder, Action<TdsConnectionContext, IBufferWriter<byte>, WriterDelegate> middleware)
         => builder.Use(next => (ctx, writer) => middleware(ctx, writer, next));
 
@@ -26,7 +19,7 @@ public static class PacketBuilderExtensions
 
         var pool = builder.GetBufferWriterPool();
 
-        builder.AddWriter((context, writer) =>
+        builder.Use((context, writer, next) =>
         {
             var offset = Marshal.SizeOf<TdsOptionItem>() * options.Count + 1;
             var optionsWriter = pool.Get();
@@ -65,42 +58,23 @@ public static class PacketBuilderExtensions
                 pool.Return(optionsWriter);
                 pool.Return(payloadWriter);
             }
+
+            next(context, writer);
         });
         return builder;
     }
 
-    public static IPacketBuilder UseNewWriter(this IPacketBuilder builder, WriterDelegate writer)
+    public static IPacketBuilder UseLength(this IPacketBuilder builder)
     {
         var pool = builder.GetBufferWriterPool();
 
-        return builder.AddWriter((ctx, w) =>
+        return builder.Use((ctx, w, next) =>
         {
             var payloadWriter = pool.Get();
 
             try
             {
-                writer(ctx, payloadWriter);
-
-                w.Write(payloadWriter.WrittenSpan);
-            }
-            finally
-            {
-                pool.Return(payloadWriter);
-            }
-        });
-    }
-
-    public static IPacketBuilder UseLengthPrefix(this IPacketBuilder builder, WriterDelegate writer)
-    {
-        var pool = builder.GetBufferWriterPool();
-
-        return builder.AddWriter((ctx, w) =>
-        {
-            var payloadWriter = pool.Get();
-
-            try
-            {
-                writer(ctx, payloadWriter);
+                next(ctx, payloadWriter);
 
                 w.Write(payloadWriter.WrittenCount);
                 w.Write(payloadWriter.WrittenSpan);

@@ -4,6 +4,7 @@ using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Protocol;
+
 public static class Login7PacketExtensions
 {
     /// <summary>
@@ -15,7 +16,8 @@ public static class Login7PacketExtensions
         {
             var pool = packet.GetBufferWriterPool();
 
-            packet.UseLengthPrefix((context, writer) =>
+            packet.UseLength();
+            packet.Use((context, writer, next) =>
             {
                 // TDS Version
                 writer.Write(0x00_00_00_80);
@@ -81,7 +83,6 @@ public static class Login7PacketExtensions
 
                 if (context.Features.Get<ISspiAuthenticationFeature>() is { } sspi)
                 {
-                    var before = payload.WrittenCount;
                     sspi.WriteBlock(Array.Empty<byte>(), payload);
                 }
                 else
@@ -95,6 +96,8 @@ public static class Login7PacketExtensions
                 payload.Write((int)0); // reserved for chSSPI
 
                 writer.Write(payload.WrittenSpan);
+
+                next(context, writer);
             });
         });
     }

@@ -49,6 +49,7 @@ public static class BedrockExtensions
         public async ValueTask ReadPacketAsync(ITdsPacket packet)
         {
             await Reader.ReadAsync(new PacketReader(ctx, packet), Token);
+            Reader.Advance();
         }
 
         public void Abort() => connection.Abort();

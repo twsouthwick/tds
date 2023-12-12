@@ -17,19 +17,15 @@ var tds = TdsConnectionBuilder.Create(provider)
     .UseHostResolution()
     .UseDefaultPacketProcessor()
     .UseBedrock()
-    .Use(async (ctx, next) =>
-    {
-        await ctx.SendPacketAsync(TdsType.PreLogin);
-        await ctx.ReadPacketAsync(TdsType.PreLogin);
-        await ctx.SendPacketAsync(TdsType.Login7);
-        //await ctx.ReadPacketAsync(TdsType.Login7);
-    })
+    .UseAuthentication()
     .Build();
 
 var parser = new TdsParser(tds)
 {
     Host = "127.0.0.1",
     Database = "test",
+    AppName = "app",
+    ServerName = "server",
 };
 
 await parser.ExecuteAsync();

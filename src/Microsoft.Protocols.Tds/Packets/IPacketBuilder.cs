@@ -6,7 +6,5 @@ public interface IPacketBuilder
 
     IPacketBuilder Use(Func<WriterDelegate, WriterDelegate> middleware);
 
-    IPacketBuilder AddHandler(Action<ITdsConnectionBuilder> builder);
-
     ITdsPacket Build();
 }

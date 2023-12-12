@@ -23,15 +23,14 @@ public class TdsConnectionContext
         var packet = GetPacket(type);
 
         await feature.ReadPacketAsync(packet);
-        await packet.OnReadCompleteAsync(this);
     }
 
-    public ValueTask SendPacketAsync(TdsType type)
+    public async ValueTask SendPacketAsync(TdsType type)
     {
         var packet = GetPacket(type);
         var feature = _connection.FetchRequired(Features);
 
-        return feature.WritePacket(packet);
+        await feature.WritePacket(packet);
     }
 
     public ITdsPacket GetPacket(TdsType type) => _collection.FetchRequired(Features).Get(type) ?? throw new InvalidOperationException($"No known packet with type '{type}'");
