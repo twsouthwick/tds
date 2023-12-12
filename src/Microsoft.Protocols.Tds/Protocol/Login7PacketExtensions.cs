@@ -53,16 +53,16 @@ public static class Login7PacketExtensions
                 // ClientLCI
                 writer.Write((int)0);
 
+                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
+                var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
+                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
+
                 var payload = pool.Get();
                 var offset = OffsetWriter.Create(
                     13, // Items added to payload needs to be known up front 
                     writer,
                     payload,
                     additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element
-
-                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
-                var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
-                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
                 offset.WritePayload(sqlUser?.HostName ?? string.Empty); // HostName
                 offset.WritePayload(sqlUser?.UserName ?? string.Empty); // UserName
@@ -97,7 +97,6 @@ public static class Login7PacketExtensions
                 offset.WriteOffset(new byte[] { 0, 0, 0, }); // reserved for chSSPI
 
                 offset.Complete();
-
 
                 next(context, writer);
             });
