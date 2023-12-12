@@ -21,4 +21,6 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
     public int Port { get; set; } = 1433;
 
     public IPAddress? IPAddress { get; set; }
+
+    public required string Database { get; init; }
 }

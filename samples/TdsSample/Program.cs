@@ -28,7 +28,8 @@ var tds = TdsConnectionBuilder.Create(provider)
 
 var parser = new TdsParser(tds)
 {
-    Host = "127.0.0.1"
+    Host = "127.0.0.1",
+    Database = "test",
 };
 
 await parser.ExecuteAsync();

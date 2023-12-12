@@ -1,4 +1,7 @@
-﻿using Microsoft.Protocols.Tds.Packets;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Protocols.Tds.Features;
+using Microsoft.Protocols.Tds.Packets;
+using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 public static class Login7PacketExtensions
@@ -47,6 +50,51 @@ public static class Login7PacketExtensions
 
                 // ClientLCI
                 writer.Write((int)0);
+
+                var payload = pool.Get();
+                var items1 = OffsetWriter.Create(10, writer, payload);
+
+                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
+                items1.Add(sqlUser?.HostName ?? string.Empty); // HostName
+                items1.Add(sqlUser?.UserName ?? string.Empty); // UserName
+                items1.Add(sqlUser?.Password ?? string.Empty); // Password
+
+                var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
+                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
+
+                items1.Add(env.AppName); // AppName
+                items1.Add(env.ServerName); // ServerName
+                items1.Add(string.Empty); // Unused
+                items1.Add(string.Empty); // Extension
+                items1.Add(string.Empty); // CltIntName
+                items1.Add(string.Empty); // Language
+                items1.Add(conn.Database); // Database
+
+                if (env.ClientId is not { Length: 6 })
+                {
+                    throw new InvalidOperationException("ClientID must be 6 bytes");
+                }
+
+                payload.Write(env.ClientId); // ClientId - NIC?
+
+                var items2 = OffsetWriter.Create(3, writer, payload);
+
+                if (context.Features.Get<ISspiAuthenticationFeature>() is { } sspi)
+                {
+                    var before = payload.WrittenCount;
+                    sspi.WriteBlock(Array.Empty<byte>(), payload);
+                }
+                else
+                {
+                    items2.Add(string.Empty); // SSPI
+                }
+
+                items2.Add(string.Empty); // AtchDBFile
+                items2.Add(string.Empty); // ChangePassword
+
+                payload.Write((int)0); // reserved for chSSPI
+
+                writer.Write(payload.WrittenSpan);
             });
         });
     }

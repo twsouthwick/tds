@@ -114,4 +114,13 @@ internal static class BufferWriterExtensions
         writer.Write(value.ToByteArray());
 #endif
     }
+
+#if NETSTANDARD || NETFRAMEWORK
+    public static long GetBytes(this Encoding encoding, string str, IBufferWriter<byte> writer)
+    {
+        var bytes = encoding.GetBytes(str);
+        writer.Write(bytes);
+        return bytes.Length;
+    }
+#endif
 }

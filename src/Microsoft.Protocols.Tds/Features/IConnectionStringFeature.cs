@@ -11,4 +11,6 @@ public interface IConnectionStringFeature
     int Port { get; set; }
 
     IPAddress? IPAddress { get; set; }
+
+    string Database { get; }
 }
