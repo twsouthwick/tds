@@ -4,7 +4,7 @@ using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, WriterDelegate _writer) : ITdsPacket
+internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, WriterDelegate _writer, ReaderDelegate _reader) : ITdsPacket
 {
     public TdsType Type => type;
 
@@ -32,6 +32,8 @@ internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWr
         {
             return;
         }
+
+        _reader(context, data);
     }
 
     private void WriteHeader(IBufferWriter<byte> writer, short length)

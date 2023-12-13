@@ -8,8 +8,19 @@ namespace Microsoft.Protocols.Tds.Packets;
 
 public static class PacketBuilderExtensions
 {
-    public static IPacketBuilder Use(this IPacketBuilder builder, Action<TdsConnectionContext, IBufferWriter<byte>, WriterDelegate> middleware)
-        => builder.Use(next => (ctx, writer) => middleware(ctx, writer, next));
+    public static IPacketBuilder UseWrite(this IPacketBuilder builder, Action<TdsConnectionContext, IBufferWriter<byte>, WriterDelegate> middleware)
+        => builder.UseWrite(next => (ctx, writer) => middleware(ctx, writer, next));
+
+    public static IPacketBuilder UseRead(this IPacketBuilder builder, Action<TdsConnectionContext, ReadOnlySequence<byte>, ReaderDelegate> middleware)
+        => builder.UseRead(next =>
+        {
+            void Reader(TdsConnectionContext context, in ReadOnlySequence<byte> data)
+            {
+                middleware(context, data, next);
+            }
+
+            return Reader;
+        });
 
     public static IPacketBuilder AddOption(this IPacketBuilder builder, Action<IList<IPacketOption>> configure)
     {
@@ -19,7 +30,21 @@ public static class PacketBuilderExtensions
 
         var pool = builder.GetBufferWriterPool();
 
-        builder.Use((context, writer, next) =>
+        builder.UseRead(next =>
+        {
+            void ReadPacket(TdsConnectionContext context, in ReadOnlySequence<byte> data)
+            {
+                var count = 0;
+                foreach (var item in new OptionsReader(data))
+                {
+                    options[count++].Read(context, item);
+                }
+            }
+
+            return ReadPacket;
+        });
+
+        builder.UseWrite((context, writer, next) =>
         {
             var offset = Marshal.SizeOf<TdsOptionItem>() * options.Count + 1;
             var optionsWriter = pool.Get();
@@ -68,7 +93,7 @@ public static class PacketBuilderExtensions
     {
         var pool = builder.GetBufferWriterPool();
 
-        return builder.Use((ctx, w, next) =>
+        return builder.UseWrite((ctx, w, next) =>
         {
             var payloadWriter = pool.Get();
 

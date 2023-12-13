@@ -28,6 +28,7 @@ public static class PreLoginPacketExtensions
 
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -42,6 +43,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -52,6 +54,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -62,6 +65,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -81,7 +85,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
-            var reader = new SequenceReader<byte>(data);
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -92,6 +96,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -109,6 +114,7 @@ public static class PreLoginPacketExtensions
     {
         public void Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)
         {
+            var bytes = data.ToArray();
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)

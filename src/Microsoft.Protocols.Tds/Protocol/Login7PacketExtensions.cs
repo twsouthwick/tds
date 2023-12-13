@@ -19,29 +19,33 @@ public static class Login7PacketExtensions
             var pool = packet.GetBufferWriterPool();
 
             packet.UseLength();
-            packet.Use((context, writer, next) =>
+            packet.UseWrite((context, writer, next) =>
             {
+                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
+                var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
+                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
+
                 // TDS Version
-                writer.WriteLittleEndian(0x00_00_00_80);
+                writer.WriteBigEndian(0x02_00_09_72);
 
                 // Packet Size
-                writer.WriteLittleEndian(0x00_10_00_00);
+                writer.WriteBigEndian(0x00_10_00_00);
 
                 // ClientProgVer
-                writer.WriteLittleEndian(0x00_00_00_07);
+                writer.WriteBigEndian(0x00_00_00_07);
 
                 // ClientPID
-                writer.WriteLittleEndian(0x00_00_00_01);
+                writer.WriteBigEndian(env.ProcessId);
 
                 // ConnectionID
-                writer.WriteLittleEndian(0x00_00_00_00);
+                writer.WriteBigEndian(0x00_00_00_00);
 
                 // OptionFlag1
-                var optionFlag1 = OptionFlag1.None;
+                var optionFlag1 = (OptionFlag1)0xE0;
                 writer.Write((byte)optionFlag1);
 
                 // OptionFlag2
-                writer.Write((byte)0);
+                writer.Write((byte)0x03);
 
                 // TypeFlag
                 writer.Write((byte)0);
@@ -50,16 +54,12 @@ public static class Login7PacketExtensions
                 writer.Write((byte)0);
 
                 // ClientTimeZone
-                writer.WriteLittleEndian((int)0);
+                writer.WriteBigEndian((int)0);
 
                 // ClientLCID
-                writer.WriteLittleEndian((int)CultureInfo.CurrentCulture.LCID);
+                writer.WriteBigEndian((int)CultureInfo.CurrentCulture.LCID);
 
-                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
-                var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
-                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
-
-                var initialOffset = ((ArrayBufferWriter<byte>)writer).WrittenCount + 4;
+                var initialOffset = ((ArrayBufferWriter<byte>)writer).WrittenCount + 4 + 8;
                 var payload = pool.Get();
                 var offset = OffsetWriter.Create(
                     13, // Items added to payload needs to be known up front 

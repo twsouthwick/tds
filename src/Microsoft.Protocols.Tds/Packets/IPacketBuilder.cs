@@ -4,7 +4,9 @@ public interface IPacketBuilder
 {
     IServiceProvider Services { get; }
 
-    IPacketBuilder Use(Func<WriterDelegate, WriterDelegate> middleware);
+    IPacketBuilder UseWrite(Func<WriterDelegate, WriterDelegate> middleware);
+
+    IPacketBuilder UseRead(Func<ReaderDelegate, ReaderDelegate> middleware);
 
     ITdsPacket Build();
 }

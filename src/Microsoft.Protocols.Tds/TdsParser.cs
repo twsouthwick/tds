@@ -1,4 +1,5 @@
 ﻿using Microsoft.Protocols.Tds.Features;
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
@@ -40,6 +41,21 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
     public required string ServerName { get; init; }
 
     public ReadOnlySpan<byte> ClientId => GetClientId.Value.AsSpan(0, 6);
+
+    int IEnvironmentFeature.ProcessId
+
+#if NET8_0_OR_GREATER
+        => Environment.ProcessId;
+#else
+        => _processId.Value;
+
+    private static Lazy<int> _processId = new Lazy<int>(() =>
+    {
+        using var p = Process.GetCurrentProcess();
+        return p.Id;
+    }, isThreadSafe: true);
+#endif
+
 
     private static Lazy<byte[]> GetClientId = new Lazy<byte[]>(() =>
     {
