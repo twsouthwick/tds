@@ -8,6 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TdsSample", "samples\TdsSam
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77DCA1C9-0224-45A3-8BC3-785A09BE1B19}"
 	ProjectSection(SolutionItems) = preProject
+		compose.yml = compose.yml
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 		global.json = global.json
@@ -22,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{4E53
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A8FC9E4B-4698-41B0-BC92-D8BB0CB8880B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Protocols.Tds.Tests", "tests\Microsoft.Protocols.Tds.Tests\Microsoft.Protocols.Tds.Tests.csproj", "{B69B1726-39B6-45A5-AE5A-659114EC1FB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Protocols.Tds.Tests", "tests\Microsoft.Protocols.Tds.Tests\Microsoft.Protocols.Tds.Tests.csproj", "{B69B1726-39B6-45A5-AE5A-659114EC1FB2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

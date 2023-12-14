@@ -80,7 +80,7 @@ public class OffsetWriterTests
 
         // Act
         offsetWriter.WritePayload(Message1);
-        offsetWriter.AddPayload(Message2);
+        offsetWriter.WritePayload(Message2);
         offsetWriter.Complete();
 
         // Assert
@@ -106,7 +106,7 @@ public class OffsetWriterTests
         // Act
         offsetWriter.WritePayload(Message1);
         offsetWriter.WriteOffset(OtherData);
-        offsetWriter.AddPayload(Message2);
+        offsetWriter.WritePayload(Message2);
         offsetWriter.Complete();
 
         // Assert

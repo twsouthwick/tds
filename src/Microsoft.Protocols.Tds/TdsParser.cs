@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 namespace Microsoft.Protocols.Tds;
 
-public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnectionStringFeature, IEnvironmentFeature
+public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnectionStringFeature, IEnvironmentFeature, ISqlUserAuthenticationFeature
 {
     private static readonly Version _version = typeof(TdsParser).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
 
@@ -16,6 +16,7 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
 
         context.Features.Set<IConnectionStringFeature>(this);
         context.Features.Set<IEnvironmentFeature>(this);
+        context.Features.Set<ISqlUserAuthenticationFeature>(this);
 
         await tdsConnection(context);
     }
@@ -42,10 +43,15 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
 
     public ReadOnlySpan<byte> ClientId => GetClientId.Value.AsSpan(0, 6);
 
+    public required string UserName { get; init; }
+
+    public required string Password { get; init; }
+
     int IEnvironmentFeature.ProcessId
 
 #if NET8_0_OR_GREATER
         => Environment.ProcessId;
+
 #else
         => _processId.Value;
 

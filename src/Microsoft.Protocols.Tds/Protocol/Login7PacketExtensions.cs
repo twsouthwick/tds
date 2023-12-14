@@ -26,19 +26,19 @@ public static class Login7PacketExtensions
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
                 // TDS Version
-                writer.WriteBigEndian(0x02_00_09_72);
+                writer.WriteLittleEndian((0x08 << 24));
 
                 // Packet Size
-                writer.WriteBigEndian(0x00_10_00_00);
+                writer.WriteLittleEndian(0x00_10_00_00);
 
                 // ClientProgVer
-                writer.WriteBigEndian(0x00_00_00_07);
+                writer.WriteLittleEndian(0x00_00_00_07);
 
                 // ClientPID
-                writer.WriteBigEndian(env.ProcessId);
+                writer.WriteLittleEndian(env.ProcessId);
 
                 // ConnectionID
-                writer.WriteBigEndian(0x00_00_00_00);
+                writer.WriteLittleEndian(0x00_00_00_00);
 
                 // OptionFlag1
                 var optionFlag1 = (OptionFlag1)0xE0;
@@ -53,28 +53,38 @@ public static class Login7PacketExtensions
                 // OptionFlag3
                 writer.Write((byte)0);
 
-                // ClientTimeZone
-                writer.WriteBigEndian((int)0);
+                // ClientTimeZone -- NOT USED
+                writer.WriteLittleEndian((int)0);
 
-                // ClientLCID
-                writer.WriteBigEndian((int)CultureInfo.CurrentCulture.LCID);
+                // ClientLCID -- NOT USED
+                writer.WriteLittleEndian(0);
 
-                var initialOffset = ((ArrayBufferWriter<byte>)writer).WrittenCount + 4 + 8;
+                // .UseLength() will set a new ArrayBufferWriter<byte> as the writer
+                var initialOffset = ((ArrayBufferWriter<byte>)writer).WrittenCount + 4;
                 var payload = pool.Get();
                 var offset = OffsetWriter.Create(
-                    13, // Items added to payload needs to be known up front 
+                    12, // Items added to payload needs to be known up front 
                     initialOffset,
                     writer,
                     payload,
                     additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element
 
-                offset.WritePayload(sqlUser?.HostName ?? string.Empty); // HostName
-                offset.WritePayload(sqlUser?.UserName ?? string.Empty); // UserName
-                offset.WritePayload(sqlUser?.Password ?? string.Empty); // Password
+                if (sqlUser is { })
+                {
+                    offset.WritePayload(sqlUser.HostName);
+                    offset.WritePayload(sqlUser.UserName);
+                    offset.WritePayload(sqlUser.Password, encrypt: true);
+                }
+                else
+                {
+                    offset.WritePayload(); // HostName
+                    offset.WritePayload(); // UserName
+                    offset.WritePayload(); // Password
+                }
+
                 offset.WritePayload(env.AppName); // AppName
                 offset.WritePayload(env.ServerName); // ServerName
-                offset.WritePayload(); // Unused
-                offset.WritePayload(); // Extension
+                offset.WritePayload(); // Unused/Extension
                 offset.WritePayload(); // CltIntName
                 offset.WritePayload(); // Language
                 offset.WritePayload(conn.Database); // Database

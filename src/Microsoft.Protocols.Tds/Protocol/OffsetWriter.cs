@@ -1,6 +1,7 @@
 ﻿using Microsoft.Protocols.Tds.Features;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Microsoft.Protocols.Tds.Protocol;
@@ -26,7 +27,7 @@ internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> 
         writer.Advance(4);
     }
 
-    public void AddPayload(ReadOnlySpan<byte> items)
+    public void WritePayload(ReadOnlySpan<byte> items)
     {
         var buffer = writer.GetSpan(4);
         WriteOffset(buffer);
@@ -37,18 +38,36 @@ internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> 
 
     public void WritePayload()
     {
-        var buffer = writer.GetSpan(4);
-        WriteOffset(buffer);
-        WriteLength(buffer, 0);
+        var buffer = writer.GetSpan(4).Slice(0, 4);
+        buffer.Clear();
         Advance();
     }
 
-    public void WritePayload(string name)
+    public void WritePayload(string name, bool encrypt = false)
     {
         var buffer = writer.GetSpan(4);
         WriteOffset(buffer);
-        var length = Encoding.Unicode.GetBytes(name, payload);
-        WriteLength(buffer, length);
+
+        if (encrypt)
+        {
+            var span = payload.GetSpan(name.Length * 2);
+            var asSpan = MemoryMarshal.AsBytes(name.AsSpan());
+
+            for (int i = 0; i < asSpan.Length; i++)
+            {
+                span[i] = Swap(asSpan[i]);
+            }
+
+            static byte Swap(byte b) => (byte)((((b & 0x0f) << 4) | (b >> 4)) ^ 0xa5);
+
+            payload.Advance(name.Length * 2);
+        }
+        else
+        {
+            Encoding.Unicode.GetBytes(name, payload);
+        }
+
+        WriteLength(buffer, name.Length);
         Advance();
     }
 

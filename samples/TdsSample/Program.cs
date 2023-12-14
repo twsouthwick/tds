@@ -26,6 +26,8 @@ var parser = new TdsParser(tds)
     Database = "test",
     AppName = "app",
     ServerName = "server",
+    UserName = "SA",
+    Password = "<YourStrong@Passw0rd>",
 };
 
 await parser.ExecuteAsync();
