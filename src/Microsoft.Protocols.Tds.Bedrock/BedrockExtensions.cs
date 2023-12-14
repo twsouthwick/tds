@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
-using System.Net;
 
 namespace Microsoft.Protocols.Tds;
 
@@ -20,12 +19,12 @@ public static class BedrockExtensions
 
         return builder.Use(async (ctx, next) =>
         {
-            if (ctx.Features.GetRequiredFeature<IConnectionStringFeature>() is not { IPAddress: { } ip, Port: { } port })
+            if (ctx.Features.GetRequiredFeature<IConnectionStringFeature>() is not { Endpoint: { } endpoint })
             {
                 throw new InvalidOperationException("No IPAddress available");
             }
 
-            var connection = await client.ConnectAsync(new IPEndPoint(ip, port));
+            var connection = await client.ConnectAsync(endpoint);
             var feature = new BedrockFeature(ctx, connection);
 
             ctx.Features.Set<ITdsConnectionFeature>(feature);

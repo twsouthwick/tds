@@ -6,11 +6,7 @@ public interface IConnectionStringFeature
 {
     string ConnectionString { get; }
 
-    string? Host { get; }
-
-    int Port { get; set; }
-
-    IPAddress? IPAddress { get; set; }
+    EndPoint Endpoint { get; }
 
     string Database { get; }
 }

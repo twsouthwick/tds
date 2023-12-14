@@ -21,7 +21,6 @@ public static class Login7PacketExtensions
             packet.UseLength();
             packet.UseWrite((context, writer, next) =>
             {
-                var sqlUser = context.Features.Get<ISqlUserAuthenticationFeature>();
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
@@ -69,7 +68,7 @@ public static class Login7PacketExtensions
                     payload,
                     additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element
 
-                if (sqlUser is { })
+                if (context.Features.Get<ISqlUserAuthenticationFeature>() is { } sqlUser)
                 {
                     offset.WritePayload(sqlUser.HostName);
                     offset.WritePayload(sqlUser.UserName);

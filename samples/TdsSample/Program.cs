@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Protocols.Tds;
 using Microsoft.Protocols.Tds.Packets;
+using System.Net;
 
 var services = new ServiceCollection();
 
@@ -14,7 +15,6 @@ services.AddLogging(builder =>
 using var provider = services.BuildServiceProvider();
 
 var tds = TdsConnectionBuilder.Create(provider)
-    .UseHostResolution()
     .UseDefaultPacketProcessor()
     .UseBedrock()
     .UseAuthentication()
@@ -22,10 +22,10 @@ var tds = TdsConnectionBuilder.Create(provider)
 
 var parser = new TdsParser(tds)
 {
-    Host = "127.0.0.1",
-    Database = "test",
+    Endpoint = new DnsEndPoint("localhost", 1433),
+    Database = "tempdb",
     AppName = "app",
-    ServerName = "server",
+    ServerName = "",
     UserName = "SA",
     Password = "<YourStrong@Passw0rd>",
 };

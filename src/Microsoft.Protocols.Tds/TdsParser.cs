@@ -21,13 +21,9 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
         await tdsConnection(context);
     }
 
-    string IConnectionStringFeature.ConnectionString => Host ?? string.Empty;
+    string IConnectionStringFeature.ConnectionString => string.Empty;
 
-    public string? Host { get; set; }
-
-    public int Port { get; set; } = 1433;
-
-    public IPAddress? IPAddress { get; set; }
+    public required EndPoint Endpoint { get; init; }
 
     public required string Database { get; init; }
 

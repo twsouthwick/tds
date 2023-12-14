@@ -1,8 +1,12 @@
 services:
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  sql1:
+    build: ./data
     ports:
       - "1433:1433"
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=<YourStrong@Passw0rd>
+    # volumes:
+    #   - ./data/mssql.conf:/var/opt/mssql/mssql.conf:z
+    #   - ./data/mssql.key:/etc/ssl/private/mssql.key:z
+    #   - ./data/mssql.pem:/etc/ssl/certs/mssql.pem:z

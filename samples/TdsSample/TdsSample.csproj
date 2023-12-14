@@ -6,12 +6,21 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="..\..\data\mssql.key" Link="mssql.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\mssql.pem" Link="mssql.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Ssl\Microsoft.Protocols.Tds.Ssl.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
   </ItemGroup>
 </Project>
