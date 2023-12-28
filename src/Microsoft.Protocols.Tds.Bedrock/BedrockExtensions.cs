@@ -101,6 +101,7 @@ public static class BedrockExtensions
             };
 
             await ssl.Stream.AuthenticateAsClientAsync(options, Token);
+            _isSslEnabled = true;
         }
 
         private sealed class PacketReader(TdsConnectionContext ctx, ITdsPacket packet) : IMessageReader<object>
