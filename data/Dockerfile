@@ -2,13 +2,13 @@ FROM mcr.microsoft.com/mssql/server:2022-latest
 
 USER root
 
-COPY mssql.key /etc/ssl/private/
-COPY mssql.pem /etc/ssl/certs/
+RUN openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=sql.docker.internal' -keyout /etc/ssl/private/mssql.key -out /etc/ssl/certs/mssql.pem -days 365
 
 RUN chmod 600 /etc/ssl/private/mssql.key /etc/ssl/certs/mssql.pem
 RUN chown mssql /etc/ssl/private/mssql.key /etc/ssl/certs/mssql.pem
+
 RUN cp /etc/ssl/certs/mssql.pem /usr/share/ca-certificates/mssql.crt
-RUN dpkg-reconfigure ca-certificates
+RUN update-ca-certificates
 
 RUN /opt/mssql/bin/mssql-conf set network.tlscert /etc/ssl/certs/mssql.pem
 RUN /opt/mssql/bin/mssql-conf set network.tlskey /etc/ssl/private/mssql.key
