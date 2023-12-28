@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
+using System.IO.Pipelines;
+using System.Net.Security;
 
 namespace Microsoft.Protocols.Tds;
 
@@ -29,18 +31,25 @@ public static class BedrockExtensions
 
             ctx.Features.Set<ITdsConnectionFeature>(feature);
             ctx.Features.Set<IAbortFeature>(feature);
+            ctx.Features.Set<ISslFeature>(feature);
 
             await next(ctx);
         });
     }
 
-    private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>
+    private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, ISslFeature
     {
-        public ProtocolWriter Writer { get; } = connection.CreateWriter();
+        private bool _isSslEnabled;
+        private ProtocolWriter? _writer;
+        private ProtocolReader? _reader;
 
-        public ProtocolReader Reader { get; } = connection.CreateReader();
+        public ProtocolWriter Writer => _writer ??= connection.CreateWriter();
+
+        public ProtocolReader Reader => _reader ??= connection.CreateReader();
 
         public CancellationToken Token => connection.ConnectionClosed;
+
+        bool ISslFeature.IsEnabled => connection.Features.Get<ITlsConnectionFeature>() is not null || _isSslEnabled;
 
         public ValueTask WritePacket(ITdsPacket packet)
             => Writer.WriteAsync(this, packet, Token);
@@ -55,6 +64,44 @@ public static class BedrockExtensions
 
         void IMessageWriter<ITdsPacket>.WriteMessage(ITdsPacket message, IBufferWriter<byte> output)
             => message.Write(ctx, output);
+
+        async ValueTask ISslFeature.EnableAsync()
+        {
+            if (_isSslEnabled)
+            {
+                return;
+            }
+
+            _writer = null;
+            _reader = null;
+
+            var memoryPool = MemoryPool<byte>.Shared;
+
+            var inputPipeOptions = new StreamPipeReaderOptions
+            (
+                pool: memoryPool,
+                bufferSize: memoryPool.GetMinimumSegmentSize(),
+                minimumReadSize: memoryPool.GetMinimumAllocSize(),
+                leaveOpen: true,
+                useZeroByteReads: true
+            );
+
+            var outputPipeOptions = new StreamPipeWriterOptions
+            (
+                pool: memoryPool,
+                leaveOpen: true
+            );
+
+            var ssl = new SslDuplexPipe(connection.Transport, inputPipeOptions, outputPipeOptions);
+            connection.Transport = ssl;
+
+            var options = new SslClientAuthenticationOptions
+            {
+                TargetHost = "sql.docker.internal",
+            };
+
+            await ssl.Stream.AuthenticateAsClientAsync(options, Token);
+        }
 
         private sealed class PacketReader(TdsConnectionContext ctx, ITdsPacket packet) : IMessageReader<object>
         {

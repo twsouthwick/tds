@@ -1,5 +1,5 @@
 services:
-  sql1:
+  sql:
     build: ./data
     ports:
       - "1433:1433"

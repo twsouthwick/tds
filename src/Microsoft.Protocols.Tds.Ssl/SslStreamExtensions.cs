@@ -42,15 +42,22 @@ public static class SslStreamExtensions
         {
             _pipe = new Pipe();
             _cts = new CancellationTokenSource();
-            _client = new TcpClient((IPEndPoint)endpoint);
+            _client = CreateClient(endpoint);
             _ssl = new SslStream(_client.GetStream(), false, new RemoteCertificateValidationCallback(ValidateServerCertifiacte), null);
         }
+
+        private static TcpClient CreateClient(EndPoint endpoint) => endpoint switch
+        {
+            DnsEndPoint dns => new TcpClient(dns.Host, dns.Port),
+            IPEndPoint ip => new TcpClient(ip),
+            _ => throw new NotImplementedException()
+        };
 
         public async ValueTask AuthenticateAsync()
         {
             var options = new SslClientAuthenticationOptions
             {
-                //TargetHost = _hostName,
+                TargetHost = "sql.docker.internal",
             };
 
             await _ssl.AuthenticateAsClientAsync(options, _cts.Token);
