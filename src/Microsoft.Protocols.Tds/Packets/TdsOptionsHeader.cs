@@ -3,7 +3,7 @@
 namespace Microsoft.Protocols.Tds.Packets;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct TdsOptionsHeader
+public struct TdsOptionsHeader
 {
     public byte Type { get; set; }
 

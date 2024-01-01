@@ -1,4 +1,5 @@
-﻿using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 
 namespace Microsoft.Protocols.Tds;
@@ -35,6 +36,12 @@ public static class AuthenticationExtensions
         {
             await context.SendPacketAsync(TdsType.PreLogin);
             await context.ReadPacketAsync(TdsType.PreLogin);
+
+            if (context.Features.GetRequiredFeature<ISslFeature>() is { IsEnabled: not true } ssl)
+            {
+                await ssl.EnableAsync();
+            }
+
             await context.SendPacketAsync(TdsType.Login7);
             await context.ReadPacketAsync(TdsType.Login7);
         }

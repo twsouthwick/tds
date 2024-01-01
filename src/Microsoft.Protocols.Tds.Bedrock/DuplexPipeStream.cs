@@ -70,7 +70,7 @@ internal class DuplexPipeStream : Stream
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
     {
-        return ReadAsyncInternal(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
+        return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
     }
 
     public override ValueTask<int> ReadAsync(Memory<byte> destination, CancellationToken cancellationToken = default)
@@ -104,7 +104,7 @@ internal class DuplexPipeStream : Stream
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
-    private async ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
+    protected async virtual ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
     {
         while (true)
         {

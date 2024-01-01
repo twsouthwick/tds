@@ -21,12 +21,6 @@ public static class PreLoginPacketExtensions
                 options.Add(new MarsOption());
                 options.Add(new TraceIdOption());
                 options.Add(new FedAuthRequiredOption());
-            })
-            .UseWrite((ctx, writer, next) =>
-            {
-                // TODO make async
-                ctx.Features.GetRequiredFeature<ISslFeature>().EnableAsync().GetAwaiter().GetResult();
-                next(ctx, writer);
             }));
 
     private sealed class VersionOption : IPacketOption

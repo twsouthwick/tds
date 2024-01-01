@@ -57,7 +57,7 @@ public static class SslStreamExtensions
         {
             var options = new SslClientAuthenticationOptions
             {
-                TargetHost = "sql.docker.internal",
+                TargetHost = "localhost"
             };
 
             await _ssl.AuthenticateAsClientAsync(options, _cts.Token);

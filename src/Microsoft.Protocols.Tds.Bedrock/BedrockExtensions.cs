@@ -56,8 +56,8 @@ public static class BedrockExtensions
 
         public async ValueTask ReadPacketAsync(ITdsPacket packet)
         {
+            var response = await Reader.ReadAsync(new PacketReader(ctx, connection.Transport.Input, packet), Token);
             Reader.Advance();
-            await Reader.ReadAsync(new PacketReader(ctx, packet), Token);
         }
 
         public void Abort() => connection.Abort();
@@ -92,19 +92,22 @@ public static class BedrockExtensions
                 leaveOpen: true
             );
 
-            var ssl = new SslDuplexPipe(connection.Transport, inputPipeOptions, outputPipeOptions);
+            //var ssl = new TdsSslDuplexPipe(connection.Transport, inputPipeOptions, outputPipeOptions);
+            var t = connection.Transport;
+            var ssl = new SslDuplexAdapter(connection.Transport);
+
             connection.Transport = ssl;
 
             var options = new SslClientAuthenticationOptions
             {
-                TargetHost = "sql.docker.internal",
+                TargetHost = "localhost",
             };
 
-            await ssl.Stream.AuthenticateAsClientAsync(options, Token);
+            await ssl.AuthenticateAsync(options, Token);
             _isSslEnabled = true;
         }
 
-        private sealed class PacketReader(TdsConnectionContext ctx, ITdsPacket packet) : IMessageReader<object>
+        private sealed class PacketReader(TdsConnectionContext ctx, PipeReader reader, ITdsPacket packet) : IMessageReader<object>
         {
             bool IMessageReader<object>.TryParseMessage(in ReadOnlySequence<byte> input, ref SequencePosition consumed, ref SequencePosition examined, out object message)
             {
@@ -118,6 +121,7 @@ public static class BedrockExtensions
                 packet.Read(ctx, input);
                 consumed = input.End;
                 examined = input.End;
+                reader.AdvanceTo(consumed);
                 return true;
             }
         }
