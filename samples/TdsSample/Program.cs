@@ -16,7 +16,6 @@ using var provider = services.BuildServiceProvider();
 
 var tds = TdsConnectionBuilder.Create(provider)
     .UseDefaultPacketProcessor()
-    //.UseSslStream()
     .UseBedrock()
     .UseAuthentication()
     .Build();

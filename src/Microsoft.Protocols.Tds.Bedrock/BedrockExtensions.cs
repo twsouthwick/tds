@@ -76,23 +76,6 @@ public static class BedrockExtensions
             _writer = null;
             _reader = null;
 
-            var memoryPool = MemoryPool<byte>.Shared;
-
-            var inputPipeOptions = new StreamPipeReaderOptions
-            (
-                pool: memoryPool,
-                bufferSize: memoryPool.GetMinimumSegmentSize(),
-                minimumReadSize: memoryPool.GetMinimumAllocSize(),
-                leaveOpen: true,
-                useZeroByteReads: true
-            );
-
-            var outputPipeOptions = new StreamPipeWriterOptions
-            (
-                pool: memoryPool,
-                leaveOpen: true
-            );
-
             var ssl = new SslDuplexAdapter(connection.Transport);
 
             connection.Transport = ssl;
