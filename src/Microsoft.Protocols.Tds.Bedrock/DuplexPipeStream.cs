@@ -70,7 +70,7 @@ internal class DuplexPipeStream : Stream
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
     {
-        return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
+        return ReadAsyncInternal(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
     }
 
     public override ValueTask<int> ReadAsync(Memory<byte> destination, CancellationToken cancellationToken = default)
@@ -86,6 +86,14 @@ internal class DuplexPipeStream : Stream
     public override Task WriteAsync(byte[]? buffer, int offset, int count, CancellationToken cancellationToken)
     {
         return _output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).GetAsTask();
+    }
+
+    public override void Write(ReadOnlySpan<byte> buffer)
+    {
+        var m = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        buffer.CopyTo(m);
+        _output.WriteAsync(m.AsMemory(0, buffer.Length));
+        ArrayPool<byte>.Shared.Return(m);
     }
 
     public override ValueTask WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)

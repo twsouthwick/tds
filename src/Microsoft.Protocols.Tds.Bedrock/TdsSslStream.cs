@@ -27,8 +27,10 @@ internal sealed class SslDuplexAdapter(IDuplexPipe duplexPipe) : DuplexPipeStrea
         if (_isAuthenticating)
         {
             _isAuthenticating = false;
-            Output.WriteHeader(TdsType.PreLogin, (short)buffer.Length);
-            base.Write(buffer);
+            var b = new ArrayBufferWriter<byte>();
+            b.WriteHeader(TdsType.PreLogin, (short)buffer.Length);
+            b.Write(buffer);
+            base.Write(b.WrittenSpan);
             _isAuthenticating = true;
         }
         else
@@ -44,10 +46,6 @@ internal sealed class SslDuplexAdapter(IDuplexPipe duplexPipe) : DuplexPipeStrea
     {
         if (_isAuthenticating)
         {
-            //Output.WriteHeader(TdsType.PreLogin, (short)buffer.Length);
-            //Output.Write(buffer.Span);
-            //await base.FlushAsync(cancellationToken);
-
             var b = new ArrayBufferWriter<byte>();
             b.WriteHeader(TdsType.PreLogin, (short)buffer.Length);
             b.Write(buffer.Span);

@@ -7,6 +7,7 @@ using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds;
 
@@ -92,8 +93,6 @@ public static class BedrockExtensions
                 leaveOpen: true
             );
 
-            //var ssl = new TdsSslDuplexPipe(connection.Transport, inputPipeOptions, outputPipeOptions);
-            var t = connection.Transport;
             var ssl = new SslDuplexAdapter(connection.Transport);
 
             connection.Transport = ssl;
@@ -101,11 +100,15 @@ public static class BedrockExtensions
             var options = new SslClientAuthenticationOptions
             {
                 TargetHost = "localhost",
+                RemoteCertificateValidationCallback = AllowAll,
             };
 
             await ssl.AuthenticateAsync(options, Token);
             _isSslEnabled = true;
         }
+
+        private static bool AllowAll(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
+            => true;
 
         private sealed class PacketReader(TdsConnectionContext ctx, PipeReader reader, ITdsPacket packet) : IMessageReader<object>
         {
