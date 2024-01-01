@@ -1,4 +1,5 @@
-﻿using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 

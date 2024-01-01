@@ -16,7 +16,7 @@ internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWr
         {
             _writer(context, payload);
 
-            WriteHeader(writer, (short)payload.WrittenCount);
+            writer.WriteHeader(Type, (short)payload.WrittenCount);
 
             writer.Write(payload.WrittenSpan);
         }
@@ -34,19 +34,5 @@ internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWr
         }
 
         _reader(context, data);
-    }
-
-    private void WriteHeader(IBufferWriter<byte> writer, short length)
-    {
-        TdsOptionsHeader header = default;
-
-        const int PacketLength = 8;
-
-        header.Type = (byte)type;
-        header.Status = (byte)TdsStatus.EOM;
-        header.PacketId = 1;
-        header.SetLength((short)(length + PacketLength));
-
-        writer.Write(ref header);
     }
 }
