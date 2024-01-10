@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.ObjectPool;
-using Microsoft.Protocols.Tds;
 using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
@@ -10,20 +9,7 @@ internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWr
 
     void ITdsPacket.Write(TdsConnectionContext context, IBufferWriter<byte> writer)
     {
-        var payload = pool.Get();
-
-        try
-        {
-            _writer(context, payload);
-
-            writer.WriteHeader(Type, (short)payload.WrittenCount);
-
-            writer.Write(payload.WrittenSpan);
-        }
-        finally
-        {
-            pool.Return(payload);
-        }
+        _writer(context, writer);
     }
 
     void ITdsPacket.Read(TdsConnectionContext context, in ReadOnlySequence<byte> data)

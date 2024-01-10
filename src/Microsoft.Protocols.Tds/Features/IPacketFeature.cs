@@ -2,9 +2,7 @@
 
 namespace Microsoft.Protocols.Tds.Features;
 
-public interface IAbortFeature
+public interface IPacketFeature
 {
-    void Abort();
-
-    CancellationToken Token { get; }
+    TdsType Type { get; set; }
 }

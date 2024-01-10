@@ -28,6 +28,11 @@ public static class BedrockExtensions
             }
 
             var connection = await client.ConnectAsync(endpoint);
+            var tdsPacketTransport = new TdsPacketAdapter(connection.Transport);
+            connection.Transport = tdsPacketTransport;
+
+            ctx.Features.Set<IPacketFeature>(tdsPacketTransport);
+
             var feature = new BedrockFeature(ctx, connection);
 
             ctx.Features.Set<ITdsConnectionFeature>(feature);
@@ -44,6 +49,8 @@ public static class BedrockExtensions
         private ProtocolWriter? _writer;
         private ProtocolReader? _reader;
 
+        private IPacketFeature PacketFeature => ctx.Features.GetRequiredFeature<IPacketFeature>();
+
         public ProtocolWriter Writer => _writer ??= connection.CreateWriter();
 
         public ProtocolReader Reader => _reader ??= connection.CreateReader();
@@ -53,7 +60,10 @@ public static class BedrockExtensions
         bool ISslFeature.IsEnabled => connection.Features.Get<ITlsConnectionFeature>() is not null || _isSslEnabled;
 
         public ValueTask WritePacket(ITdsPacket packet)
-            => Writer.WriteAsync(this, packet, Token);
+        {
+            PacketFeature.Type = packet.Type;
+            return Writer.WriteAsync(this, packet, Token);
+        }
 
         public async ValueTask ReadPacketAsync(ITdsPacket packet)
         {
@@ -86,7 +96,12 @@ public static class BedrockExtensions
                 RemoteCertificateValidationCallback = AllowAll,
             };
 
-            await ssl.AuthenticateAsync(options, Token);
+            var before = PacketFeature.Type;
+            PacketFeature.Type = TdsType.PreLogin;
+
+            await ssl.Stream.AuthenticateAsClientAsync(options, Token);
+
+            PacketFeature.Type = before;
             _isSslEnabled = true;
         }
 

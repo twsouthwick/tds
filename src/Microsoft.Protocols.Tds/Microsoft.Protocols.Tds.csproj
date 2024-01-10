@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Microsoft.Protocols.Tds.Pipelines"/>
     <InternalsVisibleTo Include="Microsoft.Protocols.Tds.Tests"/>
   </ItemGroup>
 

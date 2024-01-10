@@ -1,4 +1,7 @@
-﻿using System.Buffers;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using System.Buffers;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 
@@ -88,14 +91,6 @@ internal class DuplexPipeStream : Stream
         return _output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).GetAsTask();
     }
 
-    public override void Write(ReadOnlySpan<byte> buffer)
-    {
-        var m = ArrayPool<byte>.Shared.Rent(buffer.Length);
-        buffer.CopyTo(m);
-        _output.WriteAsync(m.AsMemory(0, buffer.Length));
-        ArrayPool<byte>.Shared.Return(m);
-    }
-
     public override ValueTask WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
         return _output.WriteAsync(source, cancellationToken).GetAsValueTask();
@@ -112,7 +107,7 @@ internal class DuplexPipeStream : Stream
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
-    protected async virtual ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
+    private async ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
     {
         while (true)
         {

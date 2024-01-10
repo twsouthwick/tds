@@ -1,17 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks Condition=" '$(PublishAOT)' == 'true'">net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsAotCompatible Condition=" '$(TargetFramework)' == 'net8.0' ">true</IsAotCompatible>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Bedrock.Framework">
-      <Version>0.1.63-alpha.gf69fa1b135</Version>
-    </PackageReference>
+    <InternalsVisibleTo Include="Microsoft.Protocols.Tds.Bedrock"/>
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.Protocols.Tds.Pipelines\Microsoft.Protocols.Tds.Pipelines.csproj" />
+    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
   </ItemGroup>
+
 </Project>

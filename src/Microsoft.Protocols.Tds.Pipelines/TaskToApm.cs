@@ -28,7 +28,10 @@ internal static class TaskToApm
             return;
         }
 
-        ArgumentNullException.ThrowIfNull(asyncResult, nameof(asyncResult));
+        if (asyncResult is null)
+        {
+            throw new ArgumentNullException(nameof(asyncResult));
+        }
     }
 
     /// <summary>Processes an IAsyncResult returned by Begin.</summary>

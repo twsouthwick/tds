@@ -31,6 +31,7 @@ internal class DuplexPipeStreamAdapter<TStream> : DuplexPipeStream, IDuplexPipe 
 
     public PipeWriter Output { get; }
 
+#if NET
     public override async ValueTask DisposeAsync()
     {
         lock (_disposeLock)
@@ -45,10 +46,21 @@ internal class DuplexPipeStreamAdapter<TStream> : DuplexPipeStream, IDuplexPipe 
         await Input.CompleteAsync();
         await Output.CompleteAsync();
     }
+#endif
 
     protected override void Dispose(bool disposing)
     {
-        throw new NotSupportedException();
+        lock (_disposeLock)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+        }
+
+        Input.Complete();
+        Output.Complete();
     }
 }
 
