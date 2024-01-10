@@ -46,29 +46,27 @@ public static class BedrockExtensions
     private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : ITdsConnectionFeature, IAbortFeature, IMessageWriter<ITdsPacket>, ISslFeature
     {
         private bool _isSslEnabled;
-        private ProtocolWriter? _writer;
-        private ProtocolReader? _reader;
 
         private IPacketFeature PacketFeature => ctx.Features.GetRequiredFeature<IPacketFeature>();
-
-        public ProtocolWriter Writer => _writer ??= connection.CreateWriter();
-
-        public ProtocolReader Reader => _reader ??= connection.CreateReader();
 
         public CancellationToken Token => connection.ConnectionClosed;
 
         bool ISslFeature.IsEnabled => connection.Features.Get<ITlsConnectionFeature>() is not null || _isSslEnabled;
 
-        public ValueTask WritePacket(ITdsPacket packet)
+        public async ValueTask WritePacket(ITdsPacket packet)
         {
             PacketFeature.Type = packet.Type;
-            return Writer.WriteAsync(this, packet, Token);
+            packet.Write(ctx, connection.Transport.Output);
+            await connection.Transport.Output.FlushAsync(Token);
         }
 
         public async ValueTask ReadPacketAsync(ITdsPacket packet)
         {
-            var response = await Reader.ReadAsync(new PacketReader(ctx, connection.Transport.Input, packet), Token);
-            Reader.Advance();
+            var result = await connection.Transport.Input.ReadAsync(Token);
+
+            packet.Read(ctx, result.Buffer);
+
+            connection.Transport.Input.AdvanceTo(result.Buffer.End);
         }
 
         public void Abort() => connection.Abort();
@@ -82,9 +80,6 @@ public static class BedrockExtensions
             {
                 return;
             }
-
-            _writer = null;
-            _reader = null;
 
             var ssl = new SslDuplexAdapter(connection.Transport);
 
