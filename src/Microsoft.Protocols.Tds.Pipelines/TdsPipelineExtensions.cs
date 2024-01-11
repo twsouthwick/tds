@@ -11,11 +11,17 @@ public static class TdsPipelineExtensions
     public static IDuplexPipe AddTdsPipeline(this TdsConnectionContext ctx, IDuplexPipe pipe)
     {
         var tdsPacketTransport = new TdsPacketAdapter(pipe);
-        var sslFeature = new SslDuplexPipeFeature(ctx, tdsPacketTransport);
-
         ctx.Features.Set<IPacketFeature>(tdsPacketTransport);
-        ctx.Features.Set<ISslFeature>(sslFeature);
 
-        return sslFeature;
+        if (ctx.Features.Get<ISslFeature>() is not { })
+        {
+            var sslFeature = new SslDuplexPipeFeature(ctx, tdsPacketTransport);
+
+            ctx.Features.Set<ISslFeature>(sslFeature);
+
+            return sslFeature;
+        }
+
+        return tdsPacketTransport;
     }
 }

@@ -19,7 +19,7 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, IDisposab
     {
         _context = context;
         _original = original;
-        _ssl = new SslDuplexAdapter(original);
+        _ssl = new(original);
         _current = original;
     }
 
@@ -66,5 +66,9 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, IDisposab
     public void Dispose()
     {
         _ssl.Dispose();
+    }
+
+    private sealed class SslDuplexAdapter(IDuplexPipe duplexPipe) : DuplexPipeStreamAdapter<SslStream>(duplexPipe, s => new SslStream(s))
+    {
     }
 }
