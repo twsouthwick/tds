@@ -3,6 +3,7 @@ using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 
@@ -23,34 +24,27 @@ public static class Login7PacketExtensions
             {
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
+                var useFeatureExtension = false;
 
                 // TDS Version
-                writer.WriteLittleEndian((0x08 << 24));
+                var version = 1946157060; // hardcoded from sqlclient
+                writer.WriteLittleEndian(version);
 
                 // Packet Size
-                writer.WriteLittleEndian(0x00_10_00_00);
+                writer.WriteLittleEndian(8_000);
 
                 // ClientProgVer
-                writer.WriteLittleEndian(0x00_00_00_07);
+                writer.WriteLittleEndian(100663296);
 
                 // ClientPID
                 writer.WriteLittleEndian(env.ProcessId);
 
                 // ConnectionID
-                writer.WriteLittleEndian(0x00_00_00_00);
+                writer.WriteLittleEndian(0);
 
-                // OptionFlag1
-                var optionFlag1 = (OptionFlag1)0xE0;
-                writer.Write((byte)optionFlag1);
-
-                // OptionFlag2
-                writer.Write((byte)0x03);
-
-                // TypeFlag
-                writer.Write((byte)0);
-
-                // OptionFlag3
-                writer.Write((byte)0);
+                // Flags
+                var optionFlag1 = useFeatureExtension ? 268436448 : 992;
+                writer.WriteLittleEndian(optionFlag1);
 
                 // ClientTimeZone -- NOT USED
                 writer.WriteLittleEndian((int)0);
@@ -83,7 +77,17 @@ public static class Login7PacketExtensions
 
                 offset.WritePayload(env.AppName); // AppName
                 offset.WritePayload(env.ServerName); // ServerName
-                offset.WritePayload(); // Unused/Extension
+
+                if (useFeatureExtension)
+                {
+                    throw new NotImplementedException();
+                    //offset.WritePayload(new[]{4);
+                }
+                else
+                {
+                    offset.WritePayload();
+                }
+
                 offset.WritePayload(); // CltIntName
                 offset.WritePayload(); // Language
                 offset.WritePayload(conn.Database); // Database
@@ -112,21 +116,55 @@ public static class Login7PacketExtensions
                 offset.Complete();
 
                 next(context, writer);
-            });
+            })
+            .WriteFeatures();
         });
     }
 
-    [Flags]
-    private enum OptionFlag1 : Byte
+    public static IPacketBuilder WriteFeatures(this IPacketBuilder builder)
     {
-        None = 0,
-        fByteOrder = 1 << 0,
-        fChar = 1 << 1,
-        fFloat1 = 1 << 2,
-        fFloat2 = 1 << 3,
-        fDumpLoad = 1 << 4,
-        fUseDB = 1 << 5,
-        fDatabase = 1 << 6,
-        fSetLang = 1 << 7,
+        var features = new[] { Recovery, Tce, GlobalTransactions, Utf8 };
+
+        return builder.UseWrite((ctx, writer, next) =>
+        {
+            foreach (var f in features)
+            {
+                f(ctx, writer);
+            }
+
+            writer.Write((byte)0xFF);
+
+            next(ctx, writer);
+        });
+    }
+
+    public static void Recovery(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x01);
+
+        // Reconnect data
+        writer.GetSpan(4).Clear();
+        writer.Advance(4);
+    }
+
+    public static void Tce(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x04);
+
+        writer.WriteLittleEndian(1);
+
+        writer.Write((byte)0x03);
+    }
+
+    public static void GlobalTransactions(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x05);
+        writer.WriteLittleEndian(0);
+    }
+
+    public static void Utf8(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x0A);
+        writer.WriteLittleEndian(0);
     }
 }

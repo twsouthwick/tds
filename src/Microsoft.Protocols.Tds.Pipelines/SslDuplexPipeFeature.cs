@@ -73,6 +73,11 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConne
     {
         var packetBytes = await _current.Input.ReadAsync(_context.Aborted);
 
+        if (packetBytes.IsCompleted)
+        {
+            throw new InvalidOperationException("Connection has completed");
+        }
+
         packet.Read(_context, packetBytes.Buffer);
 
         _current.Input.AdvanceTo(packetBytes.Buffer.End);
