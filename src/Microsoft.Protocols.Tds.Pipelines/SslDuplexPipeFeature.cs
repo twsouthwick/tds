@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.IO.Pipelines;
 using System.Net.Security;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds;

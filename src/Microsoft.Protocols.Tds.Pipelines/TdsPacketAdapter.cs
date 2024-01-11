@@ -42,7 +42,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
 
         public override void CancelPendingRead()
         {
-            _buffer = default;
+            _buffer = ReadOnlySequence<byte>.Empty;
             other.CancelPendingRead();
         }
 
@@ -119,7 +119,11 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
                 return new FlushResult(false, false);
             }
 
-            writer.WriteHeader(adapter.Type, (short)_buffer.WrittenCount);
+            if (adapter.Type != TdsType.Login7)
+            {
+                writer.WriteHeader(adapter.Type, (short)_buffer.WrittenCount);
+            }
+
             writer.Write(_buffer.WrittenSpan);
 
             var result = await writer.FlushAsync(cancellationToken);
