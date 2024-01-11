@@ -11,7 +11,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
     public TdsPacketAdapter(IDuplexPipe other)
     {
         Input = new Reader(other.Input, this);
-        Output = new Writer(other.Output, this);
+        Output = new Writer(other.Output);
     }
 
     public TdsType Type { get; set; }
@@ -102,7 +102,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
         }
     }
 
-    private sealed class Writer(PipeWriter writer, TdsPacketAdapter adapter) : PipeWriter
+    private sealed class Writer(PipeWriter writer) : PipeWriter
     {
         private readonly ArrayBufferWriter<byte> _buffer = new();
 
