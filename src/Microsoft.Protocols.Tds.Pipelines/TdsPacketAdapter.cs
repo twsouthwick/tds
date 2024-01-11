@@ -11,7 +11,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
     public TdsPacketAdapter(IDuplexPipe other)
     {
         Input = new Reader(other.Input, this);
-        Output = new Writer(other.Output);
+        Output = new Writer(other.Output, this);
     }
 
     public TdsType Type { get; set; }
@@ -26,7 +26,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
 
     private sealed class Reader(PipeReader other, TdsPacketAdapter adapter) : PipeReader
     {
-        private ReadOnlySequence<byte> _buffer;
+        private ReadOnlySequence<byte> _buffer = ReadOnlySequence<byte>.Empty;
 
         public override void AdvanceTo(SequencePosition consumed)
         {
@@ -53,7 +53,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
 
         public override async ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
         {
-            if (_buffer.Length > 0)
+            if (!_buffer.IsEmpty)
             {
                 return new ReadResult(_buffer, false, false);
             }
@@ -102,7 +102,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
         }
     }
 
-    private sealed class Writer(PipeWriter writer) : PipeWriter
+    private sealed class Writer(PipeWriter writer, TdsPacketAdapter adapter) : PipeWriter
     {
         private readonly ArrayBufferWriter<byte> _buffer = new();
 
@@ -119,6 +119,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
                 return new FlushResult(false, false);
             }
 
+            writer.WriteHeader(adapter.Type, (short)_buffer.WrittenCount);
             writer.Write(_buffer.WrittenSpan);
 
             var result = await writer.FlushAsync(cancellationToken);

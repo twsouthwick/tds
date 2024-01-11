@@ -5,4 +5,6 @@ public interface ISslFeature
     bool IsEnabled { get; }
 
     ValueTask EnableAsync();
+
+    ValueTask DisableAsync();
 }
