@@ -26,17 +26,13 @@ public static class BedrockExtensions
             }
 
             var connection = await client.ConnectAsync(endpoint);
-            var tdsPacketTransport = new TdsPacketAdapter(connection.Transport);
-            var sslFeature = new SslDuplexPipeFeature(ctx, tdsPacketTransport);
 
-            connection.Transport = sslFeature;
+            connection.Transport = ctx.AddTdsPipeline(connection.Transport);
 
             var feature = new BedrockFeature(ctx, connection);
 
             ctx.Features.Set<ITdsConnectionFeature>(feature);
             ctx.Features.Set<IAbortFeature>(feature);
-            ctx.Features.Set<IPacketFeature>(tdsPacketTransport);
-            ctx.Features.Set<ISslFeature>(sslFeature);
 
             await next(ctx);
         });
