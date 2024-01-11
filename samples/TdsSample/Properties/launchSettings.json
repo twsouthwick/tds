@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Sample - Bedrock": {
+      "commandName": "Project",
+      "commandLineArgs": "app bedrock localhost SA \"<YourStrong@Passw0rd>\""
+    },
+    "Sample - SqlClient": {
+      "commandName": "Project",
+      "commandLineArgs": "app sql localhost SA \"<YourStrong@Passw0rd>\""
+    }
+  }
+}
