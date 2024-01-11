@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Protocols.Tds;
 
-internal sealed class TdsPacketAdapter : IDuplexPipe, IPacketFeature
+internal sealed class TdsPacketAdapter : IDuplexPipe
 {
     public TdsPacketAdapter(IDuplexPipe other)
     {

@@ -8,20 +8,14 @@ namespace Microsoft.Protocols.Tds;
 
 public static class TdsPipelineExtensions
 {
-    public static IDuplexPipe AddTdsPipeline(this TdsConnectionContext ctx, IDuplexPipe pipe)
+    public static IDuplexPipe AddTdsConnection(this TdsConnectionContext ctx, IDuplexPipe pipe)
     {
         var tdsPacketTransport = new TdsPacketAdapter(pipe);
-        ctx.Features.Set<IPacketFeature>(tdsPacketTransport);
+        var sslFeature = new SslDuplexPipeFeature(ctx, tdsPacketTransport);
 
-        if (ctx.Features.Get<ISslFeature>() is not { })
-        {
-            var sslFeature = new SslDuplexPipeFeature(ctx, tdsPacketTransport);
+        ctx.Features.Set<ISslFeature>(sslFeature);
+        ctx.Features.Set<ITdsConnectionFeature>(sslFeature);
 
-            ctx.Features.Set<ISslFeature>(sslFeature);
-
-            return sslFeature;
-        }
-
-        return tdsPacketTransport;
+        return sslFeature;
     }
 }

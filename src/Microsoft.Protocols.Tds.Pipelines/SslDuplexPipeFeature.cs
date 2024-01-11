@@ -3,19 +3,20 @@ using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.IO.Pipelines;
 using System.Net.Security;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds;
 
-internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, IDisposable
+internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConnectionFeature, IDisposable
 {
     private readonly TdsConnectionContext _context;
-    private readonly IDuplexPipe _original;
+    private readonly TdsPacketAdapter _original;
     private readonly SslDuplexAdapter _ssl;
 
     private IDuplexPipe _current;
 
-    public SslDuplexPipeFeature(TdsConnectionContext context, IDuplexPipe original)
+    public SslDuplexPipeFeature(TdsConnectionContext context, TdsPacketAdapter original)
     {
         _context = context;
         _original = original;
@@ -47,14 +48,9 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, IDisposab
                 RemoteCertificateValidationCallback = AllowAll,
             };
 
-            var PacketFeature = _context.Features.GetRequiredFeature<IPacketFeature>();
-
-            var before = PacketFeature.Type;
-            PacketFeature.Type = TdsType.PreLogin;
+            _original.Type = TdsType.PreLogin;
 
             await _ssl.Stream.AuthenticateAsClientAsync(options, _context.Aborted);
-
-            PacketFeature.Type = before;
         }
 
         _current = _ssl;
@@ -66,6 +62,22 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, IDisposab
     public void Dispose()
     {
         _ssl.Dispose();
+    }
+
+    async ValueTask ITdsConnectionFeature.WritePacket(ITdsPacket packet)
+    {
+        _original.Type = packet.Type;
+        packet.Write(_context, _current.Output);
+        await _current.Output.FlushAsync(_context.Aborted);
+    }
+
+    async ValueTask ITdsConnectionFeature.ReadPacketAsync(ITdsPacket packet)
+    {
+        var packetBytes = await _current.Input.ReadAsync(_context.Aborted);
+
+        packet.Read(_context, packetBytes.Buffer);
+
+        _current.Input.AdvanceTo(packetBytes.Buffer.End);
     }
 
     private sealed class SslDuplexAdapter(IDuplexPipe duplexPipe) : DuplexPipeStreamAdapter<SslStream>(duplexPipe, s => new SslStream(s))
