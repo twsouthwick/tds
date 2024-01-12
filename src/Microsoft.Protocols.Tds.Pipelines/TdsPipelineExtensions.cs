@@ -29,12 +29,13 @@ public static class TdsPipelineExtensions
             {
                 await next(ctx);
             }
+
             static TcpClient? CreateTcpClient(EndPoint ep) => ep switch
             {
                 IPEndPoint ip => new TcpClient(ip),
                 DnsEndPoint dns => new TcpClient(dns.Host, dns.Port),
                 _ => null
-            }; ;
+            };
         });
 
     public static IDuplexPipe AddTdsConnection(this TdsConnectionContext ctx, IDuplexPipe pipe)

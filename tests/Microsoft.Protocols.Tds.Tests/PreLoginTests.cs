@@ -13,16 +13,6 @@ public class PreLoginTests
     {
         byte[] expected =
         [
-            // HEADER
-            0x12,
-            0x01,
-            0x00,
-            0x3A,
-            0x00,
-            0x00,
-            0x01,
-            0x00,
-
             // OPTION Version
             0x00,
             0x00,
@@ -85,7 +75,7 @@ public class PreLoginTests
             0x00,
             0x00,
             // DATA Mars
-            0x01,
+            0x00,
             // DATA TraceId
             // DATA FedAuthRequired
             0x01,
@@ -93,17 +83,13 @@ public class PreLoginTests
 
         // Arrange
         var context = new TdsConnectionContext();
-        var connectionFeature = new TestConnection(context);
+        var writer = new ArrayBufferWriter<byte>();
         var pipeline = TdsConnectionBuilder.Create()
             .UseDefaultPacketProcessor()
             .Use((ctx, next) =>
             {
-                ctx.Features.Set<ITdsConnectionFeature>(connectionFeature);
-                return next(ctx);
-            })
-            .Use(async (ctx, next) =>
-            {
-                await ctx.SendPacketAsync(TdsType.PreLogin);
+                ctx.GetPacket(TdsType.PreLogin).Write(ctx, writer);
+                return ValueTask.CompletedTask;
             })
             .Build();
 
@@ -111,28 +97,6 @@ public class PreLoginTests
         await pipeline(context);
 
         // Assert
-        Assert.Collection(connectionFeature.Written,
-            c => Assert.Equal(c, expected));
-    }
-
-    private sealed class TestConnection(TdsConnectionContext context) : ITdsConnectionFeature
-    {
-        public ValueTask ReadPacketAsync(ITdsPacket packet)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<byte[]> Written { get; } = new();
-
-        public TdsType Type => throw new NotImplementedException();
-
-        public ValueTask WritePacket(ITdsPacket packet)
-        {
-            var writer = new ArrayBufferWriter<byte>();
-            packet.Write(context, writer);
-            Written.Add(writer.WrittenMemory.ToArray());
-
-            return ValueTask.CompletedTask;
-        }
+        Assert.Equal(writer.WrittenSpan.ToArray(), expected);
     }
 }
