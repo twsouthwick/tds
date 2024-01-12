@@ -90,7 +90,7 @@ public static class PreLoginPacketExtensions
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write(true);
+            => writer.Write(false);
     }
 
     private sealed class TraceIdOption : IPacketOption

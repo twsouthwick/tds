@@ -24,7 +24,7 @@ public static class Login7PacketExtensions
             {
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
                 var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
-                var useFeatureExtension = false;
+                var useFeatureExtension = true;
 
                 // TDS Version
                 var version = 1946157060; // hardcoded from sqlclient
@@ -62,6 +62,7 @@ public static class Login7PacketExtensions
                     payload,
                     additionalCount: 6 + 4); // Additional items are the ClientId and the reserved for chSSPI element
 
+                var j = ((ArrayBufferWriter<byte>)writer).WrittenSpan.Slice(((ArrayBufferWriter<byte>)writer).WrittenCount - 4);
                 if (context.Features.Get<ISqlUserAuthenticationFeature>() is { } sqlUser)
                 {
                     offset.WritePayload(sqlUser.HostName);
@@ -70,9 +71,9 @@ public static class Login7PacketExtensions
                 }
                 else
                 {
-                    offset.WritePayload(); // HostName
-                    offset.WritePayload(); // UserName
-                    offset.WritePayload(); // Password
+                    offset.WriteEmptyEntry(); // HostName
+                    offset.WriteEmptyEntry(); // UserName
+                    offset.WriteEmptyEntry(); // Password
                 }
 
                 offset.WritePayload(env.AppName); // AppName
@@ -80,16 +81,15 @@ public static class Login7PacketExtensions
 
                 if (useFeatureExtension)
                 {
-                    throw new NotImplementedException();
-                    //offset.WritePayload(new[]{4);
+                    offset.CaptureFeatureOffset();
                 }
                 else
                 {
-                    offset.WritePayload();
+                    offset.WriteEmptyEntry();
                 }
 
-                offset.WritePayload(); // CltIntName
-                offset.WritePayload(); // Language
+                offset.WritePayload(env.LibraryName); // CltIntName
+                offset.WriteEmptyEntry(); // Language
                 offset.WritePayload(conn.Database); // Database
 
                 if (env.ClientId is not { Length: 6 })
@@ -105,13 +105,13 @@ public static class Login7PacketExtensions
                 }
                 else
                 {
-                    offset.WritePayload(); // SSPI
+                    offset.WriteEmptyEntry(); // SSPI
                 }
 
-                offset.WritePayload(); // AtchDBFile
-                offset.WritePayload(); // ChangePassword
+                offset.WriteEmptyEntry(); // AtchDBFile
+                offset.WriteEmptyEntry(); // ChangePassword
 
-                offset.WriteOffset(chSSPI); // reserved for chSSPI
+                offset.WriteOffset(chSSPI);
 
                 offset.Complete();
 
@@ -123,7 +123,7 @@ public static class Login7PacketExtensions
 
     public static IPacketBuilder WriteFeatures(this IPacketBuilder builder)
     {
-        var features = new[] { Recovery, Tce, GlobalTransactions, Utf8 };
+        var features = new[] { Recovery, Tce, GlobalTransactions, DataClassification, Utf8, DNSCaching };
 
         return builder.UseWrite((ctx, writer, next) =>
         {
@@ -143,8 +143,7 @@ public static class Login7PacketExtensions
         writer.Write((byte)0x01);
 
         // Reconnect data
-        writer.GetSpan(4).Clear();
-        writer.Advance(4);
+        writer.WriteLittleEndian(0);
     }
 
     public static void Tce(TdsConnectionContext context, IBufferWriter<byte> writer)
@@ -166,5 +165,18 @@ public static class Login7PacketExtensions
     {
         writer.Write((byte)0x0A);
         writer.WriteLittleEndian(0);
+    }
+
+    public static void DNSCaching(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x0B);
+        writer.WriteLittleEndian(0);
+    }
+
+    public static void DataClassification(TdsConnectionContext context, IBufferWriter<byte> writer)
+    {
+        writer.Write((byte)0x09);
+        writer.WriteLittleEndian(1);
+        writer.Write((byte)0x02);
     }
 }

@@ -37,12 +37,20 @@ public static class AuthenticationExtensions
             await context.SendPacketAsync(TdsType.PreLogin);
             await context.ReadPacketAsync(TdsType.PreLogin);
 
-            if (context.Features.GetRequiredFeature<ISslFeature>() is { IsEnabled: not true } ssl)
+            var ssl = context.Features.GetRequiredFeature<ISslFeature>();
+
+            if (ssl is { IsEnabled: not true })
             {
                 await ssl.EnableAsync();
             }
 
             await context.SendPacketAsync(TdsType.Login7);
+
+            if (ssl is { })
+            {
+                await ssl.DisableAsync();
+            }
+
             await context.ReadPacketAsync(TdsType.Login7);
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Protocols.Tds.Features;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -9,6 +10,7 @@ namespace Microsoft.Protocols.Tds.Protocol;
 internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> writer, ArrayBufferWriter<byte> payload)
 {
     private int count = 0;
+    private Memory<byte> featureOffset;
 
     private readonly void WriteOffset(Span<byte> buffer)
     {
@@ -36,10 +38,25 @@ internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> 
         Advance();
     }
 
-    public void WritePayload()
+    public void CaptureFeatureOffset()
+    {
+        var buffer = writer.GetSpan(4);
+        WriteOffset(buffer);
+        WriteLength(buffer, 4);
+
+        featureOffset = payload.GetMemory(4).Slice(0, 4);
+        payload.Advance(4);
+
+        Advance();
+    }
+
+    public void WriteEmptyEntry()
     {
         var buffer = writer.GetSpan(4).Slice(0, 4);
-        buffer.Clear();
+
+        WriteOffset(buffer);
+        WriteLength(buffer, 0);
+
         Advance();
     }
 
@@ -76,7 +93,7 @@ internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> 
         var buffer = writer.GetSpan(4);
         WriteOffset(buffer);
         var length = payload.WrittenCount;
-        sspi.WriteBlock(Array.Empty<byte>(), payload);
+        sspi.WriteBlock([], payload);
         WriteLength(buffer, payload.WrittenCount - length);
         Advance();
     }
@@ -94,7 +111,18 @@ internal struct OffsetWriter(int length, int initialOffset, IBufferWriter<byte> 
             throw new InvalidOperationException("Count was not as expected");
         }
 
+        var finalCount = count + initialOffset + payload.WrittenCount;
+
+        if (!featureOffset.IsEmpty)
+        {
+            BinaryPrimitives.WriteInt32LittleEndian(featureOffset.Span, finalCount);
+        }
+
         writer.Write(payload.WrittenSpan);
+
+#if DEBUG
+        Debug.Assert(((ArrayBufferWriter<byte>)writer).WrittenCount == finalCount - 4);
+#endif
     }
 
     public static OffsetWriter Create(int count, ArrayBufferWriter<byte> writer, ArrayBufferWriter<byte> payload, int additionalCount = 0)

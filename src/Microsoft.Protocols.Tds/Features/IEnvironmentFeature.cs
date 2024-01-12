@@ -14,6 +14,8 @@ public interface IEnvironmentFeature
 
     string ServerName { get; }
 
+    string LibraryName { get; }
+
     ReadOnlySpan<byte> ClientId { get; }
 }
 

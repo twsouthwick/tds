@@ -73,8 +73,8 @@ async Task Bedrock()
     {
         Endpoint = parsedEndpoint,
         Database = "tempdb",
-        AppName = "app",
-        ServerName = "",
+        AppName = "Core Microsoft SqlClient Data Provider",
+        ServerName = parsedEndpoint is DnsEndPoint dns ? dns.Host : "",
         UserName = username,
         Password = password,
     };
@@ -97,8 +97,8 @@ EndPoint? GetEndpoint(string endpoint)
 
     return endpoint.Split(':') switch
     {
-        [{ } name] => new DnsEndPoint(name, 1433),
-        [{ } name, { } port] when int.TryParse(port, out var parsed) => new DnsEndPoint(name, parsed),
+    [{ } name] => new DnsEndPoint(name, 1433),
+    [{ } name, { } port] when int.TryParse(port, out var parsed) => new DnsEndPoint(name, parsed),
         _ => null
     }; ;
 }

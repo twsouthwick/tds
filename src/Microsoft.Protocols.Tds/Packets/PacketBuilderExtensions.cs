@@ -101,7 +101,7 @@ public static class PacketBuilderExtensions
             {
                 next(ctx, payloadWriter);
 
-                w.WriteLittleEndian(payloadWriter.WrittenCount);
+                w.WriteLittleEndian(payloadWriter.WrittenCount + 4);
                 w.Write(payloadWriter.WrittenSpan);
             }
             finally

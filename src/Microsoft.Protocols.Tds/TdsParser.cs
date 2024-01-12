@@ -43,6 +43,8 @@ public sealed class TdsParser(TdsConnectionDelegate tdsConnection) : IConnection
 
     public required string Password { get; init; }
 
+    public string LibraryName { get; } = "Core Microsoft SqlClient Data Provider";
+
     int IEnvironmentFeature.ProcessId
 
 #if NET8_0_OR_GREATER
