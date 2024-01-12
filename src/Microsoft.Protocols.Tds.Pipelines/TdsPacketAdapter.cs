@@ -1,5 +1,4 @@
-﻿using Microsoft.Protocols.Tds.Features;
-using Microsoft.Protocols.Tds.Packets;
+﻿using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Runtime.InteropServices;
@@ -10,9 +9,12 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
 {
     public TdsPacketAdapter(IDuplexPipe other)
     {
-        Input = new Reader(other.Input, this);
-        Output = new Writer(other.Output, this);
+        Input = new Reader(this);
+        Output = new Writer(this);
+        InnerPipe = other;
     }
+
+    public IDuplexPipe InnerPipe { get; set; }
 
     public TdsType Type { get; set; }
 
@@ -24,31 +26,33 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
 
     private Writer Output { get; }
 
-    private sealed class Reader(PipeReader other, TdsPacketAdapter adapter) : PipeReader
+    private sealed class Reader(TdsPacketAdapter adapter) : PipeReader
     {
         private ReadOnlySequence<byte> _buffer = ReadOnlySequence<byte>.Empty;
+
+        private PipeReader InnerReader => adapter.InnerPipe.Input;
 
         public override void AdvanceTo(SequencePosition consumed)
         {
             _buffer = _buffer.Slice(consumed);
-            other.AdvanceTo(consumed);
+            InnerReader.AdvanceTo(consumed);
         }
 
         public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
         {
             _buffer = _buffer.Slice(consumed);
-            other.AdvanceTo(consumed, examined);
+            InnerReader.AdvanceTo(consumed, examined);
         }
 
         public override void CancelPendingRead()
         {
             _buffer = ReadOnlySequence<byte>.Empty;
-            other.CancelPendingRead();
+            InnerReader.CancelPendingRead();
         }
 
         public override void Complete(Exception? exception = null)
         {
-            other.Complete(exception);
+            InnerReader.Complete(exception);
         }
 
         public override async ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
@@ -58,7 +62,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
                 return new ReadResult(_buffer, false, false);
             }
 
-            var headerResult = await other.ReadAtLeastAsync(8, cancellationToken);
+            var headerResult = await InnerReader.ReadAtLeastAsync(8, cancellationToken);
 
             if (headerResult.IsCompleted)
             {
@@ -67,7 +71,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
 
             var expectedLength = ReadHeader(headerResult.Buffer) - 8;
 
-            var payload = await other.ReadAtLeastAsync(expectedLength, cancellationToken);
+            var payload = await InnerReader.ReadAtLeastAsync(expectedLength, cancellationToken);
 
             var actualResult = new ReadResult(payload.Buffer.Slice(0, expectedLength), payload.IsCanceled, payload.IsCompleted);
             _buffer = actualResult.Buffer;
@@ -80,7 +84,7 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
             Span<byte> buffer = stackalloc byte[8];
             var headerBytes = headerResult.Slice(0, 8);
             headerBytes.CopyTo(buffer);
-            other.AdvanceTo(headerBytes.End);
+            InnerReader.AdvanceTo(headerBytes.End);
 
             var header = MemoryMarshal.Read<TdsOptionsHeader>(buffer);
 
@@ -102,15 +106,17 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
         }
     }
 
-    private sealed class Writer(PipeWriter writer, TdsPacketAdapter adapter) : PipeWriter
+    private sealed class Writer(TdsPacketAdapter adapter) : PipeWriter
     {
         private readonly ArrayBufferWriter<byte> _buffer = new();
 
+        private PipeWriter InnerWriter => adapter.InnerPipe.Output;
+
         public override void Advance(int bytes) => _buffer.Advance(bytes);
 
-        public override void CancelPendingFlush() => writer.CancelPendingFlush();
+        public override void CancelPendingFlush() => InnerWriter.CancelPendingFlush();
 
-        public override void Complete(Exception? exception = null) => writer.Complete(exception);
+        public override void Complete(Exception? exception = null) => InnerWriter.Complete(exception);
 
         public override async ValueTask<FlushResult> FlushAsync(CancellationToken cancellationToken = default)
         {
@@ -119,10 +125,10 @@ internal sealed class TdsPacketAdapter : IDuplexPipe
                 return new FlushResult(false, false);
             }
 
-            writer.WriteHeader(adapter.Type, (short)_buffer.WrittenCount);
-            writer.Write(_buffer.WrittenSpan);
+            InnerWriter.WriteHeader(adapter.Type, (short)_buffer.WrittenCount);
+            InnerWriter.Write(_buffer.WrittenSpan);
 
-            var result = await writer.FlushAsync(cancellationToken);
+            var result = await InnerWriter.FlushAsync(cancellationToken);
 
             _buffer.ResetWrittenCount();
 

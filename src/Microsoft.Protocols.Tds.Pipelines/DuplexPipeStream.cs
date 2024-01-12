@@ -9,22 +9,20 @@ namespace Microsoft.Protocols.Tds;
 
 internal class DuplexPipeStream : Stream
 {
-    private readonly PipeReader _input;
-    private readonly PipeWriter _output;
+    private readonly IDuplexPipe _pipe;
     private readonly bool _throwOnCancelled;
     private volatile bool _cancelCalled;
 
-    public DuplexPipeStream(PipeReader input, PipeWriter output, bool throwOnCancelled = false)
+    public DuplexPipeStream(IDuplexPipe pipe, bool throwOnCancelled = false)
     {
-        _input = input;
-        _output = output;
+        _pipe = pipe;
         _throwOnCancelled = throwOnCancelled;
     }
 
     public void CancelPendingRead()
     {
         _cancelCalled = true;
-        _input.CancelPendingRead();
+        _pipe.Input.CancelPendingRead();
     }
 
     public override bool CanRead => true;
@@ -88,12 +86,12 @@ internal class DuplexPipeStream : Stream
 
     public override Task WriteAsync(byte[]? buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        return _output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).GetAsTask();
+        return _pipe.Output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).GetAsTask();
     }
 
     public override ValueTask WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
-        return _output.WriteAsync(source, cancellationToken).GetAsValueTask();
+        return _pipe.Output.WriteAsync(source, cancellationToken).GetAsValueTask();
     }
 
     public override void Flush()
@@ -103,15 +101,17 @@ internal class DuplexPipeStream : Stream
 
     public override Task FlushAsync(CancellationToken cancellationToken)
     {
-        return _output.FlushAsync(cancellationToken).GetAsTask();
+        return _pipe.Output.FlushAsync(cancellationToken).GetAsTask();
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
     {
+        var input = _pipe.Input;
+
         while (true)
         {
-            var result = await _input.ReadAsync(cancellationToken);
+            var result = await input.ReadAsync(cancellationToken);
             var readableBuffer = result.Buffer;
             try
             {
@@ -138,7 +138,7 @@ internal class DuplexPipeStream : Stream
             }
             finally
             {
-                _input.AdvanceTo(readableBuffer.End, readableBuffer.End);
+                input.AdvanceTo(readableBuffer.End, readableBuffer.End);
             }
         }
     }

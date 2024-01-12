@@ -6,20 +6,22 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds;
 
-internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConnectionFeature, IDisposable
+internal sealed class ConnectionPipelineFeature : IDuplexPipe, ISslFeature, ITdsConnectionFeature, IDisposable
 {
+    private readonly IDuplexPipe _original;
     private readonly TdsConnectionContext _context;
-    private readonly TdsPacketAdapter _original;
-    private readonly SslDuplexAdapter _ssl;
+    private readonly TdsPacketAdapter _tds;
+    private readonly SslDuplexPipe _ssl;
 
     private IDuplexPipe _current;
 
-    public SslDuplexPipeFeature(TdsConnectionContext context, TdsPacketAdapter original)
+    public ConnectionPipelineFeature(TdsConnectionContext context, IDuplexPipe original)
     {
         _context = context;
         _original = original;
-        _ssl = new(original);
-        _current = original;
+        _tds = new(original);
+        _ssl = new(_tds);
+        _current = _tds;
     }
 
     PipeReader IDuplexPipe.Input => _current.Input;
@@ -30,7 +32,8 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConne
 
     ValueTask ISslFeature.DisableAsync()
     {
-        _current = _original;
+        RemoveSsl();
+
         return ValueTask.CompletedTask;
     }
 
@@ -38,20 +41,40 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConne
     {
         if (!_ssl.Stream.IsAuthenticated)
         {
-            await _current.Output.FlushAsync(_context.Aborted);
-
             var options = new SslClientAuthenticationOptions
             {
                 TargetHost = "localhost",
                 RemoteCertificateValidationCallback = AllowAll,
             };
 
-            _original.Type = TdsType.PreLogin;
+            SetSslAsInner();
+
+            _tds.Type = TdsType.PreLogin;
 
             await _ssl.Stream.AuthenticateAsClientAsync(options, _context.Aborted);
         }
 
+        SetSslAsOuter();
+    }
+
+    private void RemoveSsl()
+    {
+        _current = _tds;
+        _tds.InnerPipe = _original;
+    }
+
+    private void SetSslAsOuter()
+    {
+        _current = _tds;
+        _tds.InnerPipe = _ssl;
+        _ssl.InnerPipe = _original;
+    }
+
+    private void SetSslAsInner()
+    {
         _current = _ssl;
+        _ssl.InnerPipe = _tds;
+        _tds.InnerPipe = _original;
     }
 
     private static bool AllowAll(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
@@ -64,7 +87,7 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConne
 
     async ValueTask ITdsConnectionFeature.WritePacket(ITdsPacket packet)
     {
-        _original.Type = packet.Type;
+        _tds.Type = packet.Type;
         packet.Write(_context, _current.Output);
         await _current.Output.FlushAsync(_context.Aborted);
     }
@@ -81,9 +104,5 @@ internal sealed class SslDuplexPipeFeature : IDuplexPipe, ISslFeature, ITdsConne
         packet.Read(_context, packetBytes.Buffer);
 
         _current.Input.AdvanceTo(packetBytes.Buffer.End);
-    }
-
-    private sealed class SslDuplexAdapter(IDuplexPipe duplexPipe) : DuplexPipeStreamAdapter<SslStream>(duplexPipe, s => new SslStream(s))
-    {
     }
 }
