@@ -36,24 +36,27 @@ internal sealed class ConnectionPipelineFeature : IDuplexPipe, ISslFeature, ITds
     {
         RemoveSsl();
 
-        return ValueTask.CompletedTask;
+        return default;
     }
 
     async ValueTask ISslFeature.EnableAsync()
     {
         if (!_ssl.Stream.IsAuthenticated)
         {
-            var options = new SslClientAuthenticationOptions
-            {
-                TargetHost = "localhost",
-                RemoteCertificateValidationCallback = AllowAll,
-            };
-
             SetSslAsInner();
 
             _tds.Type = TdsType.PreLogin;
 
+#if NET8_0_OR_GREATER
+            var options = new SslClientAuthenticationOptions
+            {
+                TargetHost = "localhost",
+            };
+
             await _ssl.Stream.AuthenticateAsClientAsync(options, _context.Aborted);
+#else
+            await _ssl.Stream.AuthenticateAsClientAsync("localhost");
+#endif
         }
 
         SetSslAsOuter();

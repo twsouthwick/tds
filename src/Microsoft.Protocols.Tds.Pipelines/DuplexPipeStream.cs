@@ -74,10 +74,17 @@ internal class DuplexPipeStream : Stream
         return ReadAsyncInternal(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
     }
 
+#if NET8_0_OR_GREATER
     public override ValueTask<int> ReadAsync(Memory<byte> destination, CancellationToken cancellationToken = default)
     {
         return ReadAsyncInternal(destination, cancellationToken);
     }
+
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
+    {
+        return _pipe.Output.WriteAsync(source, cancellationToken).GetAsValueTask();
+    }
+#endif
 
     public override void Write(byte[] buffer, int offset, int count)
     {
@@ -87,11 +94,6 @@ internal class DuplexPipeStream : Stream
     public override Task WriteAsync(byte[]? buffer, int offset, int count, CancellationToken cancellationToken)
     {
         return _pipe.Output.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).GetAsTask();
-    }
-
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
-    {
-        return _pipe.Output.WriteAsync(source, cancellationToken).GetAsValueTask();
     }
 
     public override void Flush()
@@ -104,7 +106,9 @@ internal class DuplexPipeStream : Stream
         return _pipe.Output.FlushAsync(cancellationToken).GetAsTask();
     }
 
+#if NET8_0_OR_GREATER
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
     private async ValueTask<int> ReadAsyncInternal(Memory<byte> destination, CancellationToken cancellationToken)
     {
         var input = _pipe.Input;

@@ -66,10 +66,10 @@ internal static class TaskToApm
         internal TaskAsyncResult(Task task, object? state, AsyncCallback? callback)
         {
             Debug.Assert(task != null);
-            _task = task;
+            _task = task!;
             AsyncState = state;
 
-            if (task.IsCompleted)
+            if (task!.IsCompleted)
             {
                 // Synchronous completion.  Invoke the callback.  No need to store it.
                 CompletedSynchronously = true;
@@ -92,7 +92,7 @@ internal static class TaskToApm
         {
             Debug.Assert(!CompletedSynchronously);
             Debug.Assert(_callback != null);
-            _callback.Invoke(this);
+            _callback!.Invoke(this);
         }
 
         /// <summary>Gets a user-defined object that qualifies or contains information about an asynchronous operation.</summary>
