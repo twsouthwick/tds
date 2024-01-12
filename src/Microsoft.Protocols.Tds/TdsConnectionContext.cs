@@ -17,20 +17,9 @@ public class TdsConnectionContext
 
     public void Abort() => Features.GetRequiredFeature<IAbortFeature>().Abort();
 
-    public async ValueTask ReadPacketAsync(TdsType type)
+    public ValueTask SendPacketAsync(TdsType type)
     {
-        var feature = _connection.FetchRequired(Features);
-        var packet = GetPacket(type);
-
-        await feature.ReadPacketAsync(packet);
-    }
-
-    public async ValueTask SendPacketAsync(TdsType type)
-    {
-        var packet = GetPacket(type);
-        var feature = _connection.FetchRequired(Features);
-
-        await feature.WritePacket(packet);
+        return GetPacket(type).SendAsync(this);
     }
 
     public ITdsPacket GetPacket(TdsType type) => _collection.FetchRequired(Features).Get(type) ?? throw new InvalidOperationException($"No known packet with type '{type}'");

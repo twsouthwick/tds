@@ -2,8 +2,6 @@
 using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
-using System.Globalization;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.Protocols.Tds.Protocol;
 
@@ -18,6 +16,28 @@ public static class Login7PacketExtensions
         {
             var chSSPI = new byte[] { 0, 0, 0, 0 };
             var pool = packet.GetBufferWriterPool();
+
+            packet.Send
+                .Use(async (ctx, next) =>
+                {
+                    var feature = ctx.Features.GetRequiredFeature<ITdsConnectionFeature>();
+                    var packet = ctx.GetPacket(TdsType.Login7);
+                    var ssl = ctx.Features.GetRequiredFeature<ISslFeature>();
+
+                    if (ssl is { IsEnabled: not true })
+                    {
+                        await ssl.EnableAsync();
+                    }
+
+                    await feature.WritePacket(packet);
+
+                    if (ssl is { })
+                    {
+                        await ssl.DisableAsync();
+                    }
+
+                    await feature.ReadPacketAsync(packet);
+                });
 
             packet.UseLength();
             packet.UseWrite((context, writer, next) =>
