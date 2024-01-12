@@ -30,6 +30,8 @@ internal sealed class ConnectionPipelineFeature : IDuplexPipe, ISslFeature, ITds
 
     public bool IsEnabled => ReferenceEquals(_current, _ssl) && _ssl.Stream.IsAuthenticated;
 
+    TdsType ITdsConnectionFeature.Type => _tds.Type;
+
     ValueTask ISslFeature.DisableAsync()
     {
         RemoveSsl();

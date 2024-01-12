@@ -13,7 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Bedrock\Microsoft.Protocols.Tds.Bedrock.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Ssl\Microsoft.Protocols.Tds.Ssl.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
   </ItemGroup>
 </Project>

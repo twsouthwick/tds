@@ -25,7 +25,7 @@ public static class BedrockExtensions
 
             connection.Transport = ctx.AddTdsConnection(connection.Transport);
 
-            var feature = new BedrockFeature(ctx, connection);
+            var feature = new BedrockFeature(connection);
 
             ctx.Features.Set<IAbortFeature>(feature);
 
@@ -33,7 +33,7 @@ public static class BedrockExtensions
         });
     }
 
-    private sealed class BedrockFeature(TdsConnectionContext ctx, ConnectionContext connection) : IAbortFeature
+    private sealed class BedrockFeature(ConnectionContext connection) : IAbortFeature
     {
         public CancellationToken Token => connection.ConnectionClosed;
 

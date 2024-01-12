@@ -117,7 +117,20 @@ public static class Login7PacketExtensions
 
                 next(context, writer);
             })
-            .WriteFeatures();
+            .WriteFeatures()
+            .UseRead(next =>
+            {
+                void Reader(TdsConnectionContext context, in ReadOnlySequence<byte> data)
+                {
+                    if (context.Features.GetRequiredFeature<ITdsConnectionFeature>().Type == TdsType.Table)
+                    {
+
+                    }
+                }
+
+                return Reader;
+            });
+
         });
     }
 

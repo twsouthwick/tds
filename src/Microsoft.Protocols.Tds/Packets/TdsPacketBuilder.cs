@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.ObjectPool;
-using System.Buffers;
+﻿using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
@@ -31,7 +29,7 @@ internal class TdsPacketBuilder(TdsType type, ITdsConnectionBuilder builder) : I
             reader = _readerMiddleware[i](reader);
         }
 
-        return new ConfiguredTdsPacket(type, builder.Services.GetRequiredService<ObjectPool<ArrayBufferWriter<byte>>>(), writer, reader);
+        return new ConfiguredTdsPacket(type, writer, reader);
     }
 
     public IPacketBuilder UseRead(Func<ReaderDelegate, ReaderDelegate> middleware)

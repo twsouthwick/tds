@@ -124,6 +124,8 @@ public class PreLoginTests
 
         public List<byte[]> Written { get; } = new();
 
+        public TdsType Type => throw new NotImplementedException();
+
         public ValueTask WritePacket(ITdsPacket packet)
         {
             var writer = new ArrayBufferWriter<byte>();

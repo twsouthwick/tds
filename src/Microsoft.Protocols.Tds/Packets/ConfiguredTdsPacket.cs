@@ -1,9 +1,8 @@
-﻿using Microsoft.Extensions.ObjectPool;
-using System.Buffers;
+﻿using System.Buffers;
 
 namespace Microsoft.Protocols.Tds.Packets;
 
-internal sealed class ConfiguredTdsPacket(TdsType type, ObjectPool<ArrayBufferWriter<byte>> pool, WriterDelegate _writer, ReaderDelegate _reader) : ITdsPacket
+internal sealed class ConfiguredTdsPacket(TdsType type, WriterDelegate _writer, ReaderDelegate _reader) : ITdsPacket
 {
     public TdsType Type => type;
 

@@ -11,17 +11,6 @@ public static class PacketBuilderExtensions
     public static IPacketBuilder UseWrite(this IPacketBuilder builder, Action<TdsConnectionContext, IBufferWriter<byte>, WriterDelegate> middleware)
         => builder.UseWrite(next => (ctx, writer) => middleware(ctx, writer, next));
 
-    public static IPacketBuilder UseRead(this IPacketBuilder builder, Action<TdsConnectionContext, ReadOnlySequence<byte>, ReaderDelegate> middleware)
-        => builder.UseRead(next =>
-        {
-            void Reader(TdsConnectionContext context, in ReadOnlySequence<byte> data)
-            {
-                middleware(context, data, next);
-            }
-
-            return Reader;
-        });
-
     public static IPacketBuilder AddOption(this IPacketBuilder builder, Action<IList<IPacketOption>> configure)
     {
         var options = new List<IPacketOption>();
