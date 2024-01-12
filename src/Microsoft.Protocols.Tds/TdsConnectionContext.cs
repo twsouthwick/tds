@@ -11,11 +11,11 @@ public class TdsConnectionContext
 
     public IFeatureCollection Features { get; } = new FeatureCollection();
 
-    public CancellationToken Aborted => Features.GetRequiredFeature<IAbortFeature>().Token;
+    public CancellationToken Aborted => Features.Get<IAbortFeature>()?.Token ?? CancellationToken.None;
 
     public Guid? TraceId { get; } = Guid.NewGuid();
 
-    public void Abort() => Features.GetRequiredFeature<IAbortFeature>().Abort();
+    public void Abort() => Features.Get<IAbortFeature>()?.Abort();
 
     public ValueTask SendPacketAsync(TdsType type)
     {

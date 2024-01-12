@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Security.Cryptography;
 
 namespace Microsoft.Protocols.Tds;
 
