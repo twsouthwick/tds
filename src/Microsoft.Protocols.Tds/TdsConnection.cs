@@ -16,18 +16,20 @@ public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeatur
 
     public TdsConnection(TdsConnectionDelegate tdsConnection, string connectionString)
     {
+        Context = new TdsConnectionContext();
+
+        Context.Features.Set<IConnectionStringFeature>(this);
+        Context.Features.Set<IEnvironmentFeature>(this);
+
         _tdsConnection = tdsConnection;
         _connectionString = connectionString;
     }
 
+    public TdsConnectionContext Context { get; }
+
     public async ValueTask ExecuteAsync()
     {
-        var context = new TdsConnectionContext();
-
-        context.Features.Set<IConnectionStringFeature>(this);
-        context.Features.Set<IEnvironmentFeature>(this);
-
-        await _tdsConnection(context);
+        await _tdsConnection(Context);
     }
 
     public bool TryGetValue(string key, out ReadOnlyMemory<char> value)
@@ -45,25 +47,25 @@ public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeatur
         try
         {
 #endif
-            keyWithEquals[key.Length] = '=';
+        keyWithEquals[key.Length] = '=';
 
-            var keyIndex = _connectionString.AsSpan().IndexOf(keyWithEquals, StringComparison.OrdinalIgnoreCase);
+        var keyIndex = _connectionString.AsSpan().IndexOf(keyWithEquals, StringComparison.OrdinalIgnoreCase);
 
-            if (keyIndex == -1)
-            {
-                return false;
-            }
+        if (keyIndex == -1)
+        {
+            return false;
+        }
 
-            value = _connectionString.AsMemory().Slice(keyIndex + key.Length + 1);
+        value = _connectionString.AsMemory().Slice(keyIndex + key.Length + 1);
 
-            var endIndex = value.Span.IndexOf(';');
+        var endIndex = value.Span.IndexOf(';');
 
-            if (endIndex != -1)
-            {
-                value = value.Slice(0, endIndex);
-            }
+        if (endIndex != -1)
+        {
+            value = value.Slice(0, endIndex);
+        }
 
-            return true;
+        return true;
 
 #if !NET8_0_OR_GREATER
         }
@@ -94,7 +96,6 @@ public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeatur
 
 #if NET8_0_OR_GREATER
         => Environment.ProcessId;
-
 #else
         => _processId.Value;
 
