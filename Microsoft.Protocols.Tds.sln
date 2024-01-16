@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Protocols.Tds.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Protocols.Tds.Pipelines", "src\Microsoft.Protocols.Tds.Pipelines\Microsoft.Protocols.Tds.Pipelines.csproj", "{C18EC756-5BEE-4C9E-B199-61D1E3E8D068}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClientSample", "samples\SqlClientSample\SqlClientSample.csproj", "{83208E5A-3928-44FA-B99A-37C3A56A2D03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{C18EC756-5BEE-4C9E-B199-61D1E3E8D068}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C18EC756-5BEE-4C9E-B199-61D1E3E8D068}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C18EC756-5BEE-4C9E-B199-61D1E3E8D068}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83208E5A-3928-44FA-B99A-37C3A56A2D03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83208E5A-3928-44FA-B99A-37C3A56A2D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83208E5A-3928-44FA-B99A-37C3A56A2D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83208E5A-3928-44FA-B99A-37C3A56A2D03}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,6 +69,7 @@ Global
 		{FD4F567F-875D-4343-9ED2-263B520A9D4A} = {D7556A80-5F3E-4578-97B0-30DBE74EA908}
 		{B69B1726-39B6-45A5-AE5A-659114EC1FB2} = {A8FC9E4B-4698-41B0-BC92-D8BB0CB8880B}
 		{C18EC756-5BEE-4C9E-B199-61D1E3E8D068} = {D7556A80-5F3E-4578-97B0-30DBE74EA908}
+		{83208E5A-3928-44FA-B99A-37C3A56A2D03} = {4E5383ED-03A7-4BC8-BAF8-18732F8038A0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A893A779-8998-4553-8DE5-4719E450A986}

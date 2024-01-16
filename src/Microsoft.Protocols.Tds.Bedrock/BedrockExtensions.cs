@@ -16,7 +16,7 @@ public static class BedrockExtensions
 
         return builder.Use(async (ctx, next) =>
         {
-            if (ctx.Features.GetRequiredFeature<IConnectionStringFeature>() is not { Endpoint: { } endpoint })
+            if (ctx.Features.GetRequiredFeature<IConnectionFeature>() is not { Endpoint: { } endpoint })
             {
                 throw new InvalidOperationException("No IPAddress available");
             }

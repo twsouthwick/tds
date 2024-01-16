@@ -6,7 +6,7 @@
     },
     "Sample - Bedrock": {
       "commandName": "Project",
-      "commandLineArgs": "app bedrock localhost SA \"<YourStrong@Passw0rd>\""
+      "commandLineArgs": "\"Server=localhost;Database=test;User Id=SA;Password=<YourStrong@Passw0rd>;TrustServerCertificate=true\""
     },
     "Sample - SqlClient": {
       "commandName": "Project",

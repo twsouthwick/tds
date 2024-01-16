@@ -1,4 +1,5 @@
-﻿using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.IO.Pipelines;
 using System.Net.Security;
@@ -20,7 +21,7 @@ internal sealed class ConnectionPipelineFeature : IDuplexPipe, ISslFeature, ITds
         _context = context;
         _original = original;
         _tds = new(original);
-        _ssl = new(_tds);
+        _ssl = new(_tds, () => context.Features.GetRequiredFeature<IConnectionFeature>().TrustServerCertificate);
         _current = _tds;
     }
 

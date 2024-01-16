@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Protocols.Tds.Features;
+﻿using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 
 namespace Microsoft.Protocols.Tds;

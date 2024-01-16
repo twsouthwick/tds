@@ -43,7 +43,7 @@ public static class Login7PacketExtensions
             packet.UseWrite((context, writer, next) =>
             {
                 var env = context.Features.GetRequiredFeature<IEnvironmentFeature>();
-                var conn = context.Features.GetRequiredFeature<IConnectionStringFeature>();
+                var conn = context.Features.GetRequiredFeature<IConnectionFeature>();
                 var useFeatureExtension = true;
 
                 // TDS Version

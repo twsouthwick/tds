@@ -1,6 +1,5 @@
 ﻿using System.IO.Pipelines;
 using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Protocols.Tds;
 
@@ -8,20 +7,15 @@ internal sealed class SslDuplexPipe : DuplexPipeStreamAdapter<SslStream>
 {
     private readonly Swappable _swappable;
 
-    public SslDuplexPipe(IDuplexPipe duplexPipe)
-        : this(new(duplexPipe))
+    public SslDuplexPipe(IDuplexPipe duplexPipe, Func<bool> trust)
+        : this(new(duplexPipe), trust)
     {
     }
 
-    private SslDuplexPipe(Swappable swappable)
-        : base(swappable, s => new SslStream(s, true, UserCerificateValidationCallback ))
+    private SslDuplexPipe(Swappable swappable, Func<bool> trust)
+        : base(swappable, s => new SslStream(s, true, (s, c, ch, ss) => trust()))
     {
         _swappable = swappable;
-    }
-
-    private static bool UserCerificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
-    {
-        return true;
     }
 
     public IDuplexPipe InnerPipe

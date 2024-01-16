@@ -6,7 +6,5 @@ public interface IConnectionStringFeature
 {
     string ConnectionString { get; }
 
-    EndPoint Endpoint { get; }
-
-    string Database { get; }
+    bool TryGetValue(string key, out ReadOnlyMemory<char> value);
 }
