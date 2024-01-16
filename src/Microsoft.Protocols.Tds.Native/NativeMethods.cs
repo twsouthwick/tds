@@ -39,10 +39,28 @@ public class NativeMethods
         }
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "tds_get_status")]
+    [UnmanagedCallersOnly(EntryPoint = "tds_task_get_status")]
     public static int GetStatus(long id)
     {
         return _cache.TryGetValue(id, out var v) ? (int)v.task.Status : -1;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "tds_task_wait")]
+    public static bool Wait(long id)
+    {
+        if (_cache.TryGetValue(id, out var v))
+        {
+            try
+            {
+                v.task.GetAwaiter().GetResult();
+                return true;
+            }
+            catch
+            {
+            }
+        }
+
+        return false;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "tds_connection_close")]
