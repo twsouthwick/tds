@@ -90,7 +90,7 @@ public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeatur
 
     ReadOnlySpan<byte> IEnvironmentFeature.ClientId => GetClientId.Value.AsSpan(0, 6);
 
-    string IEnvironmentFeature.LibraryName => "Core Microsoft SqlClient Data Provider";
+    string IEnvironmentFeature.LibraryName => "Microsoft.Protocols.Tds";
 
     int IEnvironmentFeature.ProcessId
 
