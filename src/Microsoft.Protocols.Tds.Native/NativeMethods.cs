@@ -26,7 +26,10 @@ public class NativeMethods
             var opened = new Opened(parser, task.AsTask());
             var key = Random.Shared.NextInt64();
 
-            _cache.TryAdd(key, opened);
+            while (!_cache.TryAdd(key, opened))
+            {
+                key = Random.Shared.NextInt64();
+            }
 
             return key;
         }
