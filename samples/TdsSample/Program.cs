@@ -10,4 +10,4 @@ var pipeline = TdsConnectionBuilder.Create()
 
 var parser = new TdsConnection(pipeline, args[0]);
 
-await parser.ExecuteAsync();
+await parser.ExecuteAsync(args[1]);

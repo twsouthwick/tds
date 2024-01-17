@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SqlClientSample": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Server=localhost;User Id=SA;Password=<YourStrong@Passw0rd>;TrustServerCertificate=true;Encrypt=false\" \"SELECT TABLE_CATALOG FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'\""
+    }
+  }
+}

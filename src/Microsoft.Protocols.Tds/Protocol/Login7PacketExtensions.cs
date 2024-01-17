@@ -31,7 +31,7 @@ public static class Login7PacketExtensions
 
                     await feature.WritePacket(packet);
 
-                    if (ssl is { })
+                    if (ssl is { } && ctx.Features.Get<IConnectionFeature>() is { IsEncrypted: false })
                     {
                         await ssl.DisableAsync();
                     }

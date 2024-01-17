@@ -11,4 +11,6 @@ public interface IConnectionFeature
     string Database { get; set; }
 
     bool TrustServerCertificate { get; set; }
+
+    bool IsEncrypted { get; set; }
 }

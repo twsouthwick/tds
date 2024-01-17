@@ -6,7 +6,7 @@ namespace Microsoft.Protocols.Tds.Native;
 
 public class NativeMethods
 {
-    private static readonly ConcurrentDictionary<long, Opened> _cache = new();
+    private static readonly ConcurrentDictionary<long, TdsConnection> _connections = new();
 
     [UnmanagedCallersOnly(EntryPoint = "tds_connection_open")]
     public static long OpenConnection(IntPtr str)
@@ -20,13 +20,10 @@ public class NativeMethods
                 return -1;
             }
 
-            var parser = new TdsConnection(_pipeline.Value, connString);
-            var task = parser.ExecuteAsync();
-
-            var opened = new Opened(parser, task.AsTask());
+            var connection = new TdsConnection(_pipeline.Value, connString);
             var key = Random.Shared.NextInt64();
 
-            while (!_cache.TryAdd(key, opened))
+            while (!_connections.TryAdd(key, connection))
             {
                 key = Random.Shared.NextInt64();
             }
@@ -39,47 +36,11 @@ public class NativeMethods
         }
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "tds_task_get_status")]
-    public static int GetStatus(long id)
-    {
-        return _cache.TryGetValue(id, out var v) ? (int)v.task.Status : -1;
-    }
-
-    [UnmanagedCallersOnly(EntryPoint = "tds_task_wait")]
-    public static bool Wait(long id)
-    {
-        if (_cache.TryGetValue(id, out var v))
-        {
-            try
-            {
-                v.task.GetAwaiter().GetResult();
-                return true;
-            }
-            catch
-            {
-            }
-        }
-
-        return false;
-    }
-
     [UnmanagedCallersOnly(EntryPoint = "tds_connection_close")]
     public static bool CloseConnection(long id)
     {
-        if (_cache.TryRemove(id, out var existing))
-        {
-            if (!existing.task.IsCompleted)
-            {
-                existing.conn.Context.Abort();
-            }
-
-            return true;
-        }
-
-        return false;
+        return _connections.TryRemove(id, out _);
     }
-
-    private record Opened(TdsConnection conn, Task task);
 
     private static Lazy<TdsConnectionDelegate> _pipeline = new Lazy<TdsConnectionDelegate>(() =>
     {

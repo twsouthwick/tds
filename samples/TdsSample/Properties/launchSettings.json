@@ -6,11 +6,11 @@
     },
     "Sample - Bedrock": {
       "commandName": "Project",
-      "commandLineArgs": "\"Server=localhost;Database=test;User Id=SA;Password=<YourStrong@Passw0rd>;TrustServerCertificate=true\""
+      "commandLineArgs": "\"Server=localhost;User Id=SA;Password=<YourStrong@Passw0rd>;TrustServerCertificate=true;Encrypt=false\" \"SELECT TABLE_CATALOG FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'\""
     },
     "Sample - SqlClient": {
       "commandName": "Project",
-      "commandLineArgs": "app sql localhost SA \"<YourStrong@Passw0rd>\""
+      "commandLineArgs": "\"Server=localhost;Database=test;User Id=SA;Password=<YourStrong@Passw0rd>;TrustServerCertificate=true\" \"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'\""
     }
   }
 }

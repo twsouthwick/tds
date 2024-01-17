@@ -11,19 +11,26 @@ namespace Microsoft.Protocols.Tds;
 
 public static class TdsPipelineExtensions
 {
+    private static bool GetBoolean(this IConnectionStringFeature feature, string name, bool defaultValue)
+    {
+        if (feature.TryGetValue(name, out var value))
+        {
+            return bool.TryParse(value.Span.ToStringIfNotCore(), out var result) ? result : defaultValue;
+        }
+
+        return defaultValue;
+    }
+
     public static ITdsConnectionBuilder UseSockets(this ITdsConnectionBuilder builder)
     {
         string[] keys = ["Data Source", "Server", "Address", "Addr", "Network Address"];
 
-        bool TryGetFirst(TdsConnectionContext context, out ReadOnlyMemory<char> datasource, out bool trust)
+        bool TryGetFirst(TdsConnectionContext context, out ReadOnlyMemory<char> datasource, out bool trust, out bool isEncrypted)
         {
-            const bool DefaultTrust = false;
-
             var c = context.Features.GetRequiredFeature<IConnectionStringFeature>();
 
-            trust = c.TryGetValue("TrustServerCertificate", out var trustServerValue)
-                ? (!bool.TryParse(trustServerValue.Span.ToStringIfNotCore(), out var result) || result)
-                : DefaultTrust;
+            trust = c.GetBoolean("TrustServerCertificate", false);
+            isEncrypted = c.GetBoolean("Encrypt", true);
 
             foreach (var key in keys)
             {
@@ -39,9 +46,13 @@ public static class TdsPipelineExtensions
 
         return builder.Use(async (ctx, next) =>
         {
-            if (TryGetFirst(ctx, out var datasource, out var trust) && CreateTcpClient(datasource, out var endpoint) is { } client)
+            if (TryGetFirst(ctx, out var datasource, out var trust, out var isEncrypted) && CreateTcpClient(datasource, out var endpoint) is { } client)
             {
-                ctx.Features.Set<IConnectionFeature>(new SocketConnectionFeature(endpoint) { TrustServerCertificate = trust });
+                ctx.Features.Set<IConnectionFeature>(new SocketConnectionFeature(endpoint)
+                {
+                    TrustServerCertificate = trust,
+                    IsEncrypted = isEncrypted,
+                });
 
                 using (client)
                 {
@@ -78,7 +89,10 @@ public static class TdsPipelineExtensions
             get => _hostname ?? (Endpoint is DnsEndPoint { Host: { } host } ? host : string.Empty);
             set => _hostname = value;
         }
+
         public bool TrustServerCertificate { get; set; }
+
+        public bool IsEncrypted { get; set; }
     }
 
     private static TcpClient CreateTcpClient(ReadOnlyMemory<char> datasource, out EndPoint endpoint)

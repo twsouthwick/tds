@@ -27,7 +27,7 @@ public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeatur
 
     public TdsConnectionContext Context { get; }
 
-    public async ValueTask ExecuteAsync()
+    public async ValueTask ExecuteAsync(string query)
     {
         await _tdsConnection(Context);
     }

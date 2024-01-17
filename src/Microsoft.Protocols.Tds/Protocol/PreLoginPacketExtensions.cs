@@ -48,7 +48,7 @@ public static class PreLoginPacketExtensions
         }
 
         public void Write(TdsConnectionContext context, IBufferWriter<byte> writer)
-            => writer.Write((byte)0);
+            => writer.Write(context.Features.GetRequiredFeature<IConnectionFeature>().IsEncrypted);
     }
 
     private sealed class InstanceOption : IPacketOption
