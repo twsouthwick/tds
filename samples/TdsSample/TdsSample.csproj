@@ -7,6 +7,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft.Protocols.Tds.Pipelines\Microsoft.Protocols.Tds.Pipelines.csproj" />
   </ItemGroup>
 </Project>

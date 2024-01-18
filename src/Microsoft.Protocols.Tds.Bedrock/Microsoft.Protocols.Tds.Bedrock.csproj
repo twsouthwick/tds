@@ -11,7 +11,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.Protocols.Tds.Pipelines\Microsoft.Protocols.Tds.Pipelines.csproj" />
     <ProjectReference Include="..\Microsoft.Protocols.Tds\Microsoft.Protocols.Tds.csproj" />
   </ItemGroup>
 </Project>

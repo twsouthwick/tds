@@ -1,12 +1,8 @@
 ﻿using Microsoft.Protocols.Tds;
-using Microsoft.Protocols.Tds.Packets;
 
-var connections = TdsConnectionPool.Create(builder => builder
-    .UseSockets()
-    .UseSqlAuthentication()
-    .UseDefaultPacketProcessor()
-    .UseAuthentication());
+var connections = TdsConnectionPool.CreateDefault();
 
 await using var connection = await connections.OpenAsync(args[0]);
 
-await connection.ExecuteAsync(args[1]);
+Console.WriteLine("Test");
+//await connection.ExecuteAsync(args[1]);

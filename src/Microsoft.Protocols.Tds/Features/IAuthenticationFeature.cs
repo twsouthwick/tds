@@ -13,6 +13,8 @@ internal interface IConnectionOpenFeature
 
     ValueTask WaitForInitializedAsync();
 
+    ValueTask WaitForDisposeAsync();
+
     ValueTask DisposeAsync();
 
     bool IsOpened { get; }

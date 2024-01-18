@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using Microsoft.Protocols.Tds.Packets;
 
 namespace Microsoft.Protocols.Tds.Native;
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Protocols.Tds.Features;
+using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 using System.Data;
 
@@ -33,6 +34,12 @@ public sealed class TdsConnectionPool
     {
         _next = next;
     }
+
+    public static TdsConnectionPool CreateDefault() => Create(builder => builder
+        .UseSockets()
+        .UseSqlAuthentication()
+        .UseDefaultPacketProcessor()
+        .UseAuthentication());
 
     public static TdsConnectionPool Create(Action<ITdsConnectionBuilder> builder)
     {
@@ -90,6 +97,7 @@ public sealed class TdsConnectionPool
         private sealed class ConnectionOpenFeature : IConnectionOpenFeature, IAbortFeature, IDisposable
         {
             private readonly TaskCompletionSource<bool> _tcs = new();
+            private readonly TaskCompletionSource<bool> _tcsDisposed = new();
             private readonly CancellationTokenSource _cts = new();
 
             public Task? Middleware { get; set; }
@@ -118,11 +126,15 @@ public sealed class TdsConnectionPool
 
             async ValueTask IConnectionOpenFeature.DisposeAsync()
             {
+                _tcsDisposed.SetResult(true);
+
                 if (Middleware is { } m)
                 {
                     await m;
                 }
             }
+
+            public async ValueTask WaitForDisposeAsync() => await _tcsDisposed.Task;
         }
     }
 
@@ -149,10 +161,12 @@ public sealed class TdsConnectionPool
 
         public static ITdsConnectionBuilder Create(IServiceProvider? provider = null) => new TdsConnectionBuilder(provider);
 
-        private static readonly TdsConnectionDelegate _connection = context =>
+        private static readonly TdsConnectionDelegate _connection = async context =>
         {
-            context.Features.GetRequiredFeature<IConnectionOpenFeature>().Initialized();
-            return default;
+            var feature = context.Features.GetRequiredFeature<IConnectionOpenFeature>();
+
+            feature.Initialized();
+            await feature.WaitForDisposeAsync();
         };
 
         public TdsConnectionDelegate Build()
