@@ -7,29 +7,25 @@ using System.Reflection;
 
 namespace Microsoft.Protocols.Tds;
 
-public sealed class TdsConnection : IConnectionStringFeature, IEnvironmentFeature
+public sealed class DefaultTdsConnectionContext : TdsConnectionContext, IConnectionStringFeature, IEnvironmentFeature
 {
-    private static readonly Version _version = typeof(TdsConnection).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
+    private static readonly Version _version = typeof(DefaultTdsConnectionContext).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
 
     private readonly TdsConnectionDelegate _tdsConnection;
     private readonly string _connectionString;
 
-    public TdsConnection(TdsConnectionDelegate tdsConnection, string connectionString)
+    public DefaultTdsConnectionContext(TdsConnectionDelegate tdsConnection, string connectionString)
     {
-        Context = new TdsConnectionContext();
-
-        Context.Features.Set<IConnectionStringFeature>(this);
-        Context.Features.Set<IEnvironmentFeature>(this);
+        Features.Set<IConnectionStringFeature>(this);
+        Features.Set<IEnvironmentFeature>(this);
 
         _tdsConnection = tdsConnection;
         _connectionString = connectionString;
     }
 
-    public TdsConnectionContext Context { get; }
-
     public async ValueTask ExecuteAsync(string query)
     {
-        await _tdsConnection(Context);
+        await _tdsConnection(this);
     }
 
     public bool TryGetValue(string key, out ReadOnlyMemory<char> value)

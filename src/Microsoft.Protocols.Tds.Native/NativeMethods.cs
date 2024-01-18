@@ -6,7 +6,7 @@ namespace Microsoft.Protocols.Tds.Native;
 
 public class NativeMethods
 {
-    private static readonly ConcurrentDictionary<long, TdsConnection> _connections = new();
+    private static readonly ConcurrentDictionary<long, DefaultTdsConnectionContext> _connections = new();
 
     [UnmanagedCallersOnly(EntryPoint = "tds_connection_open")]
     public static long OpenConnection(IntPtr str)
@@ -20,7 +20,7 @@ public class NativeMethods
                 return -1;
             }
 
-            var connection = new TdsConnection(_pipeline.Value, connString);
+            var connection = new DefaultTdsConnectionContext(_pipeline.Value, connString);
             var key = Random.Shared.NextInt64();
 
             while (!_connections.TryAdd(key, connection))

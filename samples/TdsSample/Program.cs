@@ -8,6 +8,6 @@ var pipeline = TdsConnectionBuilder.Create()
     .UseAuthentication()
     .Build();
 
-var parser = new TdsConnection(pipeline, args[0]);
+var parser = new DefaultTdsConnectionContext(pipeline, args[0]);
 
 await parser.ExecuteAsync(args[1]);
