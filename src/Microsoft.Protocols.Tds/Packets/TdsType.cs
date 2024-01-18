@@ -3,6 +3,7 @@
 public enum TdsType : byte
 {
     Unknown = 0,
+    SqlBatch = 0x01,
     Table = 0x04,
     Login7 = 0x10,
     PreLogin = 0x12,

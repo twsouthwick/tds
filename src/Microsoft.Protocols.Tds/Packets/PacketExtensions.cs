@@ -10,6 +10,7 @@ public static class PacketExtensions
         {
             packet.AddPreLogin();
             packet.AddLogin7();
+            packet.AddBatch();
         });
 
     public static ITdsConnectionBuilder UsePacketProcessor(this ITdsConnectionBuilder builder, Action<IPacketCollectionBuilder> configure)
