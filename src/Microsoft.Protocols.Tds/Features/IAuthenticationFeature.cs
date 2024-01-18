@@ -7,3 +7,13 @@ public interface IAuthenticationFeature
     ValueTask AuthenticateAsync();
 }
 
+internal interface IConnectionOpenFeature
+{
+    void Initialized();
+
+    ValueTask WaitForInitializedAsync();
+
+    ValueTask DisposeAsync();
+
+    bool IsOpened { get; }
+}

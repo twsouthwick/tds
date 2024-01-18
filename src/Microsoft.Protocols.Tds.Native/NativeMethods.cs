@@ -20,13 +20,16 @@ public class NativeMethods
                 return -1;
             }
 
-            var connection = new DefaultTdsConnectionContext(_pipeline.Value, connString);
             var key = Random.Shared.NextInt64();
+
+#if FALSE
+            var connection = new DefaultTdsConnectionContext(_pipeline.Value, connString);
 
             while (!_connections.TryAdd(key, connection))
             {
                 key = Random.Shared.NextInt64();
             }
+#endif
 
             return key;
         }
@@ -41,14 +44,4 @@ public class NativeMethods
     {
         return _connections.TryRemove(id, out _);
     }
-
-    private static Lazy<TdsConnectionDelegate> _pipeline = new Lazy<TdsConnectionDelegate>(() =>
-    {
-        return TdsConnectionBuilder.Create()
-            .UseSockets()
-            .UseSqlAuthentication()
-            .UseDefaultPacketProcessor()
-            .UseAuthentication()
-            .Build();
-    }, isThreadSafe: true);
 }

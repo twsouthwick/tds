@@ -1,13 +1,12 @@
 ﻿using Microsoft.Protocols.Tds;
 using Microsoft.Protocols.Tds.Packets;
 
-var pipeline = TdsConnectionBuilder.Create()
+var connections = TdsConnectionPool.Create(builder => builder
     .UseSockets()
     .UseSqlAuthentication()
     .UseDefaultPacketProcessor()
-    .UseAuthentication()
-    .Build();
+    .UseAuthentication());
 
-var parser = new DefaultTdsConnectionContext(pipeline, args[0]);
+await using var connection = await connections.OpenAsync(args[0]);
 
-await parser.ExecuteAsync(args[1]);
+await connection.ExecuteAsync(args[1]);

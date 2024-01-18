@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Microsoft.Protocols.Tds;
 
-public sealed class DefaultTdsConnectionContext : TdsConnectionContext, IConnectionStringFeature, IEnvironmentFeature
+public class DefaultTdsConnectionContext : TdsConnectionContext, IConnectionStringFeature, IEnvironmentFeature
 {
     private static readonly Version _version = typeof(DefaultTdsConnectionContext).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
 
