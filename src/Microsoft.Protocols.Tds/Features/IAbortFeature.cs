@@ -1,6 +1,4 @@
-﻿using Microsoft.Protocols.Tds.Packets;
-
-namespace Microsoft.Protocols.Tds.Features;
+﻿namespace Microsoft.Protocols.Tds.Features;
 
 public interface IAbortFeature
 {

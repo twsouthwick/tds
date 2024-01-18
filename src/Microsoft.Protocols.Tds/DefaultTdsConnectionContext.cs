@@ -1,7 +1,6 @@
 ﻿using Microsoft.Protocols.Tds.Features;
 using System.Buffers;
 using System.Diagnostics;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Reflection;
 

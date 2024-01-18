@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Microsoft.Protocols.Tds.Features;
+﻿namespace Microsoft.Protocols.Tds.Features;
 
 public interface IConnectionStringFeature
 {

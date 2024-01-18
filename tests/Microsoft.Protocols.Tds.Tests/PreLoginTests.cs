@@ -1,8 +1,6 @@
-using Microsoft.Protocols.Tds.Features;
 using Microsoft.Protocols.Tds.Packets;
 using System.Buffers;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.Protocols.Tds.Tests;
 
